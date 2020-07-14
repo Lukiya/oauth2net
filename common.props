@@ -1,0 +1,10 @@
+<Project>
+    <PropertyGroup>
+        <Description>OAuth2Net</Description>
+        <Company>LukiyA</Company>
+        <Authors>Lukiya</Authors>
+        <Version>1.0.0</Version>
+        <AssemblyVersion>1.0.0</AssemblyVersion>
+        <FileVersion>1.0.0</FileVersion>
+    </PropertyGroup>
+</Project>
