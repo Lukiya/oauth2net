@@ -6,8 +6,8 @@ namespace OAuth2Net.Client
     public interface IClient
     {
         string ID { get; set; }
-        string Secert { get; set; }
-        IList<string> GrantTypes { get; set; }
+        string Secret { get; set; }
+        IList<string> Grants { get; set; }
         IList<string> Scopes { get; set; }
         IList<string> RedirectUris { get; set; }
     }
@@ -15,8 +15,8 @@ namespace OAuth2Net.Client
     public class Client : IClient
     {
         public string ID { get; set; }
-        public string Secert { get; set; }
-        public IList<string> GrantTypes { get; set; }
+        public string Secret { get; set; }
+        public IList<string> Grants { get; set; }
         public IList<string> Scopes { get; set; }
         public IList<string> RedirectUris { get; set; }
     }

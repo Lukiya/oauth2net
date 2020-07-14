@@ -1,10 +1,10 @@
-﻿using System;
-namespace OAuth2Net
+﻿namespace System
 {
-    public class Extensions
+    public static class Extensions
     {
-        public Extensions()
+        public static bool IsSuccess(this string msg)
         {
+            return msg == OAuth2Net.Consts.Msg_Success;
         }
     }
 }

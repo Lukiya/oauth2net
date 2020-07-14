@@ -56,7 +56,7 @@ namespace OAuth2Net.Redis.Client
         public IClient Verify(string clientID, string clientSecret)
         {
             var client = GetClient(clientID);
-            if (client != null && client.Secert == _secertHash.Hash(clientSecret))
+            if (client != null && client.Secret == _secertHash.Hash(clientSecret))
             {
                 return client;
             }
@@ -66,7 +66,7 @@ namespace OAuth2Net.Redis.Client
         public async Task<IClient> VerifyAsync(string clientID, string clientSecret)
         {
             var client = await GetClientAsync(clientID).ConfigureAwait(false);
-            if (client != null && client.Secert == _secertHash.Hash(clientSecret))
+            if (client != null && client.Secret == _secertHash.Hash(clientSecret))
             {
                 return client;
             }
