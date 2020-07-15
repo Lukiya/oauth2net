@@ -1,12 +1,11 @@
-{
-  "profiles": {
-    "auth": {
-      "commandName": "Project",
-      //"launchBrowser": true,
-      "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
-      },
-      "applicationUrl": "http://localhost:5000"
+﻿{
+    "profiles": {
+        "auth": {
+            "commandName": "Project",
+            "applicationUrl": "http://localhost:6001",
+            "environmentVariables": {
+                "ASPNETCORE_ENVIRONMENT": "Development"
+            }
+        }
     }
-  }
 }

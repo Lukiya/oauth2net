@@ -1,4 +1,6 @@
 ﻿using System;
+using System.IO;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace OAuth2Net
@@ -6,6 +8,14 @@ namespace OAuth2Net
     public static class Consts
     {
         public const string Header_Authorization = "Authorization";
+        //public const string Claim_nbf = "nbf";
+        //public const string Claim_exp = "exp";
+        //public const string Claim_typ = "typ";
+        //public const string Claim_typ_JWT = "JWT";
+        //public const string Claim_alg = "alg";
+        //public const string Claim_alg_RS256 = "RS256";
+        public const string Claim_role = "role";
+        public const string Claim_name = "name";
         public const string Form_GrantType = "grant_type";
         public const string Form_Scope = "scope";
         public const string GrantType_Client = "client_credentials";

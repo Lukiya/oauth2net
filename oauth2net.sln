@@ -9,7 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OAuth2Net.Redis", "OAuth2Ne
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "example", "example", "{3D8B2930-6C3D-432B-843E-6D522B30E453}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "auth", "example\auth\auth.csproj", "{2502A382-3997-476B-B519-4A4C92A71F9A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "auth", "example\auth\auth.csproj", "{076A5789-D47A-410C-8B61-F6713A8E4B2E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -25,16 +25,16 @@ Global
 		{0F7A034F-69D4-4360-B192-AF7882776AB4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0F7A034F-69D4-4360-B192-AF7882776AB4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0F7A034F-69D4-4360-B192-AF7882776AB4}.Release|Any CPU.Build.0 = Release|Any CPU
-		{2502A382-3997-476B-B519-4A4C92A71F9A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{2502A382-3997-476B-B519-4A4C92A71F9A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{2502A382-3997-476B-B519-4A4C92A71F9A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{2502A382-3997-476B-B519-4A4C92A71F9A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{076A5789-D47A-410C-8B61-F6713A8E4B2E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{076A5789-D47A-410C-8B61-F6713A8E4B2E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{076A5789-D47A-410C-8B61-F6713A8E4B2E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{076A5789-D47A-410C-8B61-F6713A8E4B2E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{2502A382-3997-476B-B519-4A4C92A71F9A} = {3D8B2930-6C3D-432B-843E-6D522B30E453}
+		{076A5789-D47A-410C-8B61-F6713A8E4B2E} = {3D8B2930-6C3D-432B-843E-6D522B30E453}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {CF867463-12D7-41D6-B26F-64260974E1A0}

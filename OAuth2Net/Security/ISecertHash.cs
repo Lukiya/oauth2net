@@ -1,4 +1,4 @@
-namespace OAuth2Net.Secret
+namespace OAuth2Net.Security
 {
     public interface ISecertHash
     {

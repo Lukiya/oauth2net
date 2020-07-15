@@ -2,7 +2,7 @@
 using System.Linq;
 using System.Collections.Generic;
 using OAuth2Net.Client;
-using OAuth2Net.Secret;
+using OAuth2Net.Security;
 using StackExchange.Redis;
 using Newtonsoft.Json;
 using System.Threading.Tasks;
@@ -39,6 +39,10 @@ namespace OAuth2Net.Redis.Client
         public async Task<IClient> GetClientAsync(string clientID)
         {
             var json = await _Database.HashGetAsync(_key, clientID).ConfigureAwait(false);
+            if (json.IsNull)
+            {
+                return null;
+            }
             return JsonConvert.DeserializeObject<OAuth2Net.Client.Client>(json.ToString());
         }
 
