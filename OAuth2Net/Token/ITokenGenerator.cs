@@ -1,54 +1,49 @@
 ﻿using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json;
+using OAuth2Net.Client;
+using OAuth2Net.Security;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
-using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
 using System.Threading.Tasks;
 
-namespace OAuth2Net.Security
+namespace OAuth2Net.Token
 {
     public interface ITokenGenerator
     {
-        Task<string> GenerateAsync(int expireSeconds, params Claim[] builtInClaims);
+        Task<string> GenerateAsync(GrantType grantType, IClient client, string[] scopes);
     }
 
     public class TokenGenerator : ITokenGenerator
     {
         private static readonly ClaimCompare _claimCompare = new ClaimCompare();
-        private readonly ICertProvider _certProvider;
+
+        public TokenIssuerOptions TokenIssuerOptions { get; }
+
+        private readonly ISecurityKeyProvider _certProvider;
         private readonly IClaimGenerator _claimGenerator;
 
-        public TokenGenerator(ICertProvider certProvider, IClaimGenerator claimGenerator)
+        public TokenGenerator(ISecurityKeyProvider certProvider, IClaimGenerator claimGenerator, TokenIssuerOptions options)
         {
+            TokenIssuerOptions = options;
             _certProvider = certProvider;
             _claimGenerator = claimGenerator;
         }
 
-        public async Task<string> GenerateAsync(int expireSeconds, params Claim[] builtInClaims)
+        public async Task<string> GenerateAsync(GrantType grantType, IClient client, string[] scopes)
         {
             var securityKey = _certProvider.GetSecurityKey();
 
             var handler = new JsonWebTokenHandler();
             var now = DateTime.UtcNow;
 
-            var claims = await _claimGenerator.GenerateAsync().ConfigureAwait(false);
-            if (builtInClaims.Length > 0)
-            {
-                claims = claims.Union(builtInClaims, _claimCompare).ToList();
-            }
+            var claims = await _claimGenerator.GenerateAsync(grantType, client, scopes).ConfigureAwait(false);
 
             var descriptor = new SecurityTokenDescriptor
             {
-                Issuer = "http://localhost:5000",
-                Audience = "report",
                 IssuedAt = now,
                 NotBefore = now,
-                Expires = now.AddSeconds(expireSeconds),
+                Expires = now.AddSeconds(TokenIssuerOptions.ExpiresInSeconds),
                 Subject = new ClaimsIdentity(claims),
                 SigningCredentials = new SigningCredentials(securityKey, SecurityAlgorithms.RsaSsaPssSha256)
             };

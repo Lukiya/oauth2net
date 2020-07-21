@@ -1,4 +1,7 @@
-﻿using System;
+﻿using OAuth2Net.Client;
+using OAuth2Net.Security;
+using OAuth2Net.Token;
+using System;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
@@ -14,8 +17,10 @@ namespace OAuth2Net
         //public const string Claim_typ_JWT = "JWT";
         //public const string Claim_alg = "alg";
         //public const string Claim_alg_RS256 = "RS256";
-        public const string Claim_role = "role";
-        public const string Claim_name = "name";
+        public const string Claim_Role = "role";
+        public const string Claim_Name = "name";
+        public const string Claim_Audience = "aud";
+        public const string Claim_Issuer = "iss";
         public const string Form_GrantType = "grant_type";
         public const string Form_Scope = "scope";
         public const string GrantType_Client = "client_credentials";
@@ -32,7 +37,7 @@ namespace OAuth2Net
         public string Message { get; set; } = Consts.Msg_Success;
         public T Result { get; set; }
 
-        public bool IsSuccess => Message.IsSuccess();
+        public bool IsSuccess => Message == Consts.Msg_Success;
     }
 
     public static class Base64Encoder
@@ -52,5 +57,24 @@ namespace OAuth2Net
         {
             return Encoding.UTF8.GetString(Convert.FromBase64String(str));
         }
+    }
+
+    public enum GrantType
+    {
+        ClientCredentials,
+        AuthorizationCode,
+        Implicit,
+        ResourceOwner,
+    }
+
+    public class TokenIssuerOptions
+    {
+        public int ExpiresInSeconds { get; set; } = 3600;
+        public ITokenIssuer TokenIssuer { get; set; }
+        public IClientValidator ClientValidator { get; set; }
+        public ITokenGenerator TokenGenerator { get; set; }
+        public IClaimGenerator ClaimGenerator { get; set; }
+        public ISecurityKeyProvider SecurityKeyProvider { get; set; }
+        public IClientStore ClientStore { get; set; }
     }
 }

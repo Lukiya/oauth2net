@@ -1,5 +1,4 @@
 ﻿using auth.Models;
-using IdentityModel;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
@@ -15,7 +14,7 @@ namespace auth.Controllers
         #region -  Login  -
 
         [HttpGet]
-        public async Task<IActionResult> Login(string returnUrl)
+        public IActionResult Login(string returnUrl)
         {
             return View(new LoginModel { ReturnUrl = returnUrl });
         }
@@ -42,6 +41,22 @@ namespace auth.Controllers
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(principal), props).ConfigureAwait(false);
 
             return View(model);
+        }
+
+        #endregion
+        // *******************************************************************************************************************************
+        #region -  Logout  -
+
+        [HttpPost]
+        public async Task<ActionResult> Logout(string returnUrl)
+        {
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme).ConfigureAwait(false);
+            return RedirectToAction(nameof(LoggedOut));
+        }
+
+        public ActionResult LoggedOut()
+        {
+            return View();
         }
 
         #endregion

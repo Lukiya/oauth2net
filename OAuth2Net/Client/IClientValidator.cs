@@ -3,7 +3,7 @@ using OAuth2Net.Client;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace OAuth2Net.Security
+namespace OAuth2Net.Client
 {
     public interface IClientValidator
     {
@@ -13,10 +13,10 @@ namespace OAuth2Net.Security
 
     public class ClientValidator : IClientValidator
     {
-        private readonly ILogger<OAuth2Server> _logger;
+        private readonly ILogger<TokenIssuer> _logger;
         private readonly IClientStore _clientStore;
 
-        public ClientValidator(IClientStore clientStore, ILogger<OAuth2Server> logger)
+        public ClientValidator(IClientStore clientStore, ILogger<TokenIssuer> logger)
         {
             _logger = logger;
             _clientStore = clientStore;
