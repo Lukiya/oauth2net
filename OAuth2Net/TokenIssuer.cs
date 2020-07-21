@@ -35,9 +35,9 @@ namespace OAuth2Net
 
         protected virtual async Task HandleTokenRequestAsync(HttpContext context)
         {
-            var authorzation = context.Request.Headers[Consts.Header_Authorization].FirstOrDefault();
-            var grantType = context.Request.Form[Consts.Form_GrantType].FirstOrDefault();
-            var scopes = context.Request.Form[Consts.Form_Scope].FirstOrDefault();
+            var authorzation = context.Request.Headers[OAuth2Consts.Header_Authorization].FirstOrDefault();
+            var grantType = context.Request.Form[OAuth2Consts.Form_GrantType].FirstOrDefault();
+            var scopes = context.Request.Form[OAuth2Consts.Form_Scope].FirstOrDefault();
 
             var clientVerifyResult = await _clientValidator.VerifyClientAsync(authorzation, grantType, scopes).ConfigureAwait(false);
             if (!clientVerifyResult.IsSuccess)
@@ -51,7 +51,7 @@ namespace OAuth2Net
 
             switch (grantType)
             {
-                case Consts.GrantType_Client:
+                case OAuth2Consts.GrantType_Client:
                     // issue token directly
                     var token = await _tokenGenerator.GenerateAsync(
                           GrantType.ClientCredentials
@@ -59,14 +59,14 @@ namespace OAuth2Net
                         , scopes: scopesArray
                     ).ConfigureAwait(false);
 
-                    await WriteTokenAsync(context.Response, string.Format(Consts.Tmpl_Token1, token, TokenIssuerOptions.ExpiresInSeconds, scopes)).ConfigureAwait(false);
+                    await WriteTokenAsync(context.Response, string.Format(OAuth2Consts.Tmpl_Token1, token, TokenIssuerOptions.ExpiresInSeconds, scopes)).ConfigureAwait(false);
                     break;
-                case Consts.GrantType_Code:
+                case OAuth2Consts.GrantType_Code:
                     break;
-                case Consts.GrantType_Owner:
+                case OAuth2Consts.GrantType_Owner:
                     // verify username & password
                     break;
-                case Consts.GrantType_Implicit:
+                case OAuth2Consts.GrantType_Implicit:
                     break;
                 default:
                     context.Response.StatusCode = (int)HttpStatusCode.BadRequest;

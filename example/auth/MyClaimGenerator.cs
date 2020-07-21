@@ -23,18 +23,18 @@ namespace auth
 
             // add issuer, this example just use http address as issuer, you can implement your own logic
             var issuer = $"{context.Request.Scheme}://{context.Request.Host}";
-            claims.Add(new Claim(Consts.Claim_Issuer, issuer));
+            claims.Add(new Claim(OAuth2Consts.Claim_Issuer, issuer));
 
             // add audiences, this example just use user requested scopes as audiences
             foreach (var scope in scopes)
             {
-                claims.Add(new Claim(Consts.Claim_Audience, scope));
+                claims.Add(new Claim(OAuth2Consts.Claim_Audience, scope));
             }
 
             if (grantType == GrantType.ClientCredentials)
             {
-                claims.Add(new Claim(Consts.Claim_Name, client.ID));
-                claims.Add(new Claim(Consts.Claim_Role, "1"));
+                claims.Add(new Claim(OAuth2Consts.Claim_Name, client.ID));
+                claims.Add(new Claim(OAuth2Consts.Claim_Role, "1"));
             }
 
             return Task.FromResult<IList<Claim>>(claims);
