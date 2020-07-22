@@ -1,6 +1,7 @@
 ﻿using OAuth2Net;
 using OAuth2Net.Client;
 using OAuth2Net.Security;
+using OAuth2Net.Store;
 using OAuth2Net.Token;
 using System;
 
@@ -49,6 +50,13 @@ namespace Microsoft.Extensions.DependencyInjection
             else
                 // use default
                 services.AddSingleton<ITokenGenerator, DefaultTokenGenerator>();
+
+            // AuthorizationCodeStore
+            if (options.AuthorizationCodeStore != null)
+                services.AddSingleton(_ => options.AuthorizationCodeStore);
+            else
+                // use default
+                services.AddSingleton<IAuthorizationCodeStore, DefaultAuthorizationCodeStore>();
 
             // ClaimGenerator
             if (options.ClaimGenerator != null)

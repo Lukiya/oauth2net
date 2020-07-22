@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using OAuth2Net.Model;
+using OAuth2Net.Store;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -6,12 +7,10 @@ namespace OAuth2Net.Client
 {
     public class DefaultClientValidator : IClientValidator
     {
-        private readonly ILogger<DefaultAuthServer> _logger;
         private readonly IClientStore _clientStore;
 
-        public DefaultClientValidator(IClientStore clientStore, ILogger<DefaultAuthServer> logger)
+        public DefaultClientValidator(IClientStore clientStore)
         {
-            _logger = logger;
             _clientStore = clientStore;
         }
 
@@ -26,7 +25,6 @@ namespace OAuth2Net.Client
             {
                 mr.MsgCode = OAuth2Consts.Err_invalid_request;
                 mr.MsgCodeDescription = "no authorization header";
-                _logger.LogDebug(mr.MsgCodeDescription);
                 return mr;
             }
 
@@ -35,7 +33,6 @@ namespace OAuth2Net.Client
             {
                 mr.MsgCode = OAuth2Consts.Err_invalid_request;
                 mr.MsgCodeDescription = "invalid authorization header format";
-                _logger.LogDebug(mr.MsgCodeDescription);
                 return mr;
             }
 
@@ -46,7 +43,6 @@ namespace OAuth2Net.Client
             {
                 mr.MsgCode = OAuth2Consts.Err_invalid_request;
                 mr.MsgCodeDescription = "invalid authorization header segments length";
-                _logger.LogDebug(mr.MsgCodeDescription);
                 return mr;
             }
 
@@ -55,11 +51,33 @@ namespace OAuth2Net.Client
             {
                 mr.MsgCode = OAuth2Consts.Err_invalid_client;
                 mr.MsgCodeDescription = "invalid client";
-                _logger.LogDebug(mr.MsgCodeDescription);
                 return mr;
             }
 
             mr.Result = client;
+            return mr;
+        }
+
+        /// <summary>
+        /// Verify client id & secret, grant type, scopes
+        /// </summary>
+        public virtual async Task<MessageResult<IClient>> VerifyClientAsync(string authorzation, string grantType)
+        {
+            var mr = new MessageResult<IClient>();
+
+            if (string.IsNullOrWhiteSpace(grantType))
+            {
+                mr.MsgCode = OAuth2Consts.Err_invalid_request;
+                mr.MsgCodeDescription = "grant type is missing";
+                return mr;
+            }
+
+            mr = await VerifyClientAsync(authorzation).ConfigureAwait(false);
+            if (!mr.IsSuccess) return mr;
+
+            ValidateGrants(mr, mr.Result, grantType);
+            if (!mr.IsSuccess) return mr;
+
             return mr;
         }
 
@@ -74,7 +92,6 @@ namespace OAuth2Net.Client
             {
                 mr.MsgCode = OAuth2Consts.Err_invalid_request;
                 mr.MsgCodeDescription = "grant type is missing";
-                _logger.LogDebug(mr.MsgCodeDescription);
                 return mr;
             }
 
@@ -82,7 +99,6 @@ namespace OAuth2Net.Client
             {
                 mr.MsgCode = OAuth2Consts.Err_invalid_request;
                 mr.MsgCodeDescription = "scope is missing";
-                _logger.LogDebug(mr.MsgCodeDescription);
                 return mr;
             }
 
@@ -108,28 +124,24 @@ namespace OAuth2Net.Client
             {
                 mr.MsgCode = OAuth2Consts.Err_invalid_request;
                 mr.MsgCodeDescription = "client id is missing";
-                _logger.LogDebug(mr.MsgCodeDescription);
                 return mr;
             }
             if (string.IsNullOrWhiteSpace(responseType))
             {
                 mr.MsgCode = OAuth2Consts.Err_invalid_request;
                 mr.MsgCodeDescription = "response type is missing";
-                _logger.LogDebug(mr.MsgCodeDescription);
                 return mr;
             }
             if (string.IsNullOrWhiteSpace(redirectURI))
             {
                 mr.MsgCode = OAuth2Consts.Err_invalid_request;
                 mr.MsgCodeDescription = "redirect uri is missing";
-                _logger.LogDebug(mr.MsgCodeDescription);
                 return mr;
             }
             if (string.IsNullOrWhiteSpace(scopesStr))
             {
                 mr.MsgCode = OAuth2Consts.Err_invalid_request;
                 mr.MsgCodeDescription = "scope is missing";
-                _logger.LogDebug(mr.MsgCodeDescription);
                 return mr;
             }
 
@@ -138,7 +150,6 @@ namespace OAuth2Net.Client
             {
                 mr.MsgCode = OAuth2Consts.Err_invalid_client;
                 mr.MsgCodeDescription = "invalid client";
-                _logger.LogDebug(mr.MsgCodeDescription);
                 return mr;
             }
 
@@ -161,13 +172,11 @@ namespace OAuth2Net.Client
             {
                 mr.MsgCode = OAuth2Consts.Err_access_denied;
                 mr.MsgCodeDescription = $"no redirect uri is allowed for '{client.ID}'";
-                _logger.LogWarning(mr.MsgCodeDescription);
             }
             else if (!client.RedirectUris.Contains(redirectURI))
             {
                 mr.MsgCode = OAuth2Consts.Err_access_denied;
                 mr.MsgCodeDescription = $"'{redirectURI}' is allowed for '{client.ID}'";
-                _logger.LogWarning(mr.MsgCodeDescription);
             }
         }
 
@@ -177,7 +186,6 @@ namespace OAuth2Net.Client
             {
                 mr.MsgCode = OAuth2Consts.Err_invalid_scope;
                 mr.MsgCodeDescription = $"no scope is allowed for '{client.ID}'";
-                _logger.LogWarning(mr.MsgCodeDescription);
                 return;
             }
 
@@ -187,7 +195,6 @@ namespace OAuth2Net.Client
             {
                 mr.MsgCode = OAuth2Consts.Err_invalid_scope;
                 mr.MsgCodeDescription = $"scope '{string.Join(", ", notAllowedScopes)}' is not allowed for '{client.ID}'";
-                _logger.LogWarning(mr.MsgCodeDescription);
             }
         }
 
@@ -197,7 +204,6 @@ namespace OAuth2Net.Client
             {
                 mr.MsgCode = OAuth2Consts.Err_unauthorized_client;
                 mr.MsgCodeDescription = $"'{grantType}' grant is not allowed for '{client.ID}'";
-                _logger.LogWarning(mr.MsgCodeDescription);
             }
         }
 
@@ -205,7 +211,7 @@ namespace OAuth2Net.Client
         {
             if (responseType == OAuth2Consts.ResponseType_Code)
             {
-                ValidateGrants(mr, client, OAuth2Consts.GrantType_Code);
+                ValidateGrants(mr, client, OAuth2Consts.GrantType_AuthorizationCode);
             }
             else if (responseType == OAuth2Consts.ResponseType_Token)
             {

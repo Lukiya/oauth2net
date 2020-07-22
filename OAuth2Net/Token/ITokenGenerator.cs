@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
-using OAuth2Net.Client;
+using OAuth2Net.Model;
 using System.Threading.Tasks;
 
 namespace OAuth2Net.Token

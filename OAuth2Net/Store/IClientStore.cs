@@ -1,8 +1,8 @@
-using System;
+using OAuth2Net.Model;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace OAuth2Net.Client
+namespace OAuth2Net.Store
 {
     public interface IClientStore
     {

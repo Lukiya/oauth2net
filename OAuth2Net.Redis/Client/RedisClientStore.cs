@@ -1,10 +1,11 @@
-﻿using System;
-using System.Linq;
-using System.Collections.Generic;
-using OAuth2Net.Client;
+﻿using Newtonsoft.Json;
+using OAuth2Net.Model;
 using OAuth2Net.Security;
+using OAuth2Net.Store;
 using StackExchange.Redis;
-using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace OAuth2Net.Redis.Client
@@ -34,7 +35,7 @@ namespace OAuth2Net.Redis.Client
         public IClient GetClient(string clientID)
         {
             var json = _Database.HashGet(_key, clientID);
-            return JsonConvert.DeserializeObject<OAuth2Net.Client.Client>(json);
+            return JsonConvert.DeserializeObject<Model.Client>(json);
         }
         public async Task<IClient> GetClientAsync(string clientID)
         {
@@ -43,18 +44,18 @@ namespace OAuth2Net.Redis.Client
             {
                 return null;
             }
-            return JsonConvert.DeserializeObject<OAuth2Net.Client.Client>(json.ToString());
+            return JsonConvert.DeserializeObject<Model.Client>(json.ToString());
         }
 
         public IDictionary<string, IClient> GetClients()
         {
             var hashEntries = _Database.HashGetAll(_key);
-            return hashEntries.ToDictionary(x => x.ToString(), x => (IClient)JsonConvert.DeserializeObject<OAuth2Net.Client.Client>(x.ToString()));
+            return hashEntries.ToDictionary(x => x.ToString(), x => (IClient)JsonConvert.DeserializeObject<Model.Client>(x.ToString()));
         }
         public async Task<IDictionary<string, IClient>> GetClientsAsync()
         {
             var hashEntries = await _Database.HashGetAllAsync(_key).ConfigureAwait(false);
-            return hashEntries.ToDictionary(x => x.Name.ToString(), x => (IClient)JsonConvert.DeserializeObject<OAuth2Net.Client.Client>(x.Value.ToString()));
+            return hashEntries.ToDictionary(x => x.Name.ToString(), x => (IClient)JsonConvert.DeserializeObject<Model.Client>(x.Value.ToString()));
         }
 
         public IClient Verify(string clientID, string clientSecret)

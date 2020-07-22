@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
-using OAuth2Net.Client;
+using OAuth2Net.Model;
 using OAuth2Net.Security;
 using System;
 using System.Security.Claims;
@@ -14,9 +14,9 @@ namespace OAuth2Net.Token
         public AuthServerOptions AuthServerOptions { get; }
 
         private readonly ISecurityKeyProvider _securityKeyProvider;
-        private readonly IClaimGenerator _claimGenerator;
+        private readonly ITokenClaimGenerator _claimGenerator;
 
-        public DefaultTokenGenerator(ISecurityKeyProvider certProvider, IClaimGenerator claimGenerator, AuthServerOptions options)
+        public DefaultTokenGenerator(ISecurityKeyProvider certProvider, ITokenClaimGenerator claimGenerator, AuthServerOptions options)
         {
             AuthServerOptions = options;
             _securityKeyProvider = certProvider;

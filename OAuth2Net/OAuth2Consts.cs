@@ -17,6 +17,7 @@
         public const string Form_RedirectUri = "redirect_uri";
         public const string Form_State = "state";
         public const string Form_Scope = "scope";
+        public const string Form_Code = "code";
         public const string Form_Username = "username";
         public const string Form_Password = "password";
         public const string Form_ResponseType = "response_type";
@@ -27,9 +28,9 @@
         public const string ResponseType_Token = "token";
         public const string ResponseType_Code = "code";
         public const string GrantType_Client = "client_credentials";
-        public const string GrantType_Code = "authorization_code";
-        public const string GrantType_Implicit = "token";
-        public const string GrantType_Owner = "password";
+        public const string GrantType_AuthorizationCode = "authorization_code";
+        public const string GrantType_Implicit = "implicit";
+        public const string GrantType_ResourceOwner = "password";
         public const string GrantType_RefreshToken = "refresh_token";
         public const string Format_Token1 = "{{\"" + Form_AccessToken + "\":\"{0}\",\"" + Form_ExpiresIn + "\":\"{1}\",\"" + Form_Scope + "\":\"{2}\",\"" + Form_TokenType + "\":\"Bearer\"}}";
         public const string Format_Token2 = "{{\"" + Form_AccessToken + "\":\"{0}\",\"" + Form_RefreshToken + "\":\"{1}\",\"" + Form_ExpiresIn + "\":\"{2}\",\"" + Form_Scope + "\":\"{3}\",\"" + Form_TokenType + "\":\"Bearer\"}}";

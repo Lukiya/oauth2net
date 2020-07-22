@@ -1,7 +1,6 @@
-using System;
 using System.Collections.Generic;
 
-namespace OAuth2Net.Client
+namespace OAuth2Net.Model
 {
     public interface IClient
     {

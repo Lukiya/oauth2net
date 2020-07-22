@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using OAuth2Net;
-using OAuth2Net.Client;
+using OAuth2Net.Model;
 using OAuth2Net.Token;
 using System.Collections.Generic;
 using System.Security.Claims;
@@ -8,9 +8,9 @@ using System.Threading.Tasks;
 
 namespace auth
 {
-    public class MyClaimGenerator : DefaultClaimGeneratorBase
+    public class MyClaimGenerator : ITokenClaimGenerator
     {
-        public override Task<IList<Claim>> GenerateAsync(HttpContext context, GrantType grantType, IClient client, string[] scopes, string username)
+        public Task<IList<Claim>> GenerateAsync(HttpContext context, GrantType grantType, IClient client, string[] scopes, string username)
         {
             var claims = new List<Claim>();
             claims.Add(new Claim(OAuth2Consts.Claim_Name, username));
