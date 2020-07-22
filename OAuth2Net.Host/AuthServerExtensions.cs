@@ -1,43 +1,54 @@
 ﻿using OAuth2Net;
 using OAuth2Net.Client;
+using OAuth2Net.Security;
 using OAuth2Net.Token;
 using System;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
-    public static class TokenIssuerExtensions
+    public static class AuthServerExtensions
     {
-        public static IServiceCollection AddTokenIssuer(this IServiceCollection services, Action<IServiceProvider, TokenIssuerOptions> configOptions)
+        public static IServiceCollection AddAuthServer(this IServiceCollection services, Action<IServiceProvider, AuthServerOptions> configOptions)
         {
-            services.AddHttpContextAccessor();
-
             var sp = services.BuildServiceProvider();
-            var options = new TokenIssuerOptions();
+            var options = new AuthServerOptions();
             configOptions(sp, options);
+
+            if (options.ExpiresInSeconds <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(options.ExpiresInSeconds), "ExpiresInSeconds must be positive integer");
+            }
 
             services.AddSingleton(options);
 
             // TokenIssuer
-            if (options.TokenIssuer != null)
+            if (options.AuthServer != null)
                 // use default
-                services.AddSingleton(_ => options.TokenIssuer);
+                services.AddSingleton(_ => options.AuthServer);
             else
                 // use default
-                services.AddSingleton<ITokenIssuer, TokenIssuer>();
+                services.AddSingleton<IAuthServer, DefaultAuthServer>();
 
             // ClientValidator
             if (options.ClientValidator != null)
                 services.AddSingleton(_ => options.ClientValidator);
             else
                 // use default
-                services.AddSingleton<IClientValidator, ClientValidator>();
+                services.AddSingleton<IClientValidator, DefaultClientValidator>();
+
+            // ResourceOwnerValidator
+            if (options.ResourceOwnerValidator != null)
+                services.AddSingleton(_ => options.ResourceOwnerValidator);
+            else
+                // use default
+                services.AddSingleton<IResourceOwnerValidator, NotSupportResourceOwnerValidator>();
 
             // TokenGenerator
             if (options.TokenGenerator != null)
                 services.AddSingleton(_ => options.TokenGenerator);
             else
                 // use default
-                services.AddSingleton<ITokenGenerator, TokenGenerator>();
+                services.AddSingleton<ITokenGenerator, DefaultTokenGenerator>();
 
             // ClaimGenerator
             if (options.ClaimGenerator != null)

@@ -15,6 +15,7 @@ namespace api
     {
         public Startup(IConfiguration configuration)
         {
+            JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
             Configuration = configuration;
         }
 
@@ -44,8 +45,6 @@ namespace api
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
-
             app.UseForwardedHeaders();
 
             if (env.IsDevelopment())

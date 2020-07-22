@@ -2,9 +2,10 @@
 {
     public class MessageResult<T>
     {
-        public string Message { get; set; } = OAuth2Consts.Msg_Success;
+        public string MsgCode { get; set; } = OAuth2Consts.Msg_Success;
+        public string MsgCodeDescription { get; set; }
         public T Result { get; set; }
 
-        public bool IsSuccess => Message == OAuth2Consts.Msg_Success;
+        public bool IsSuccess => MsgCode == OAuth2Consts.Msg_Success;
     }
 }

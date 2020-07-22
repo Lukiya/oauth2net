@@ -4,9 +4,4 @@ namespace OAuth2Net.Security
     {
         string Hash(string secert);
     }
-
-    public class NoSecertHash : ISecertHash
-    {
-        public string Hash(string secert) => secert;
-    }
 }

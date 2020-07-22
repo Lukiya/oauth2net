@@ -1,16 +1,13 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using OAuth2Net;
-using OAuth2Net.Client;
 using OAuth2Net.Redis.Client;
 using OAuth2Net.Security;
-using OAuth2Net.Token;
 
 namespace auth
 {
@@ -41,10 +38,9 @@ namespace auth
             services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
                 .AddCookie();
 
-            services.AddTokenIssuer((sp, options) =>
+            services.AddAuthServer((sp, options) =>
             {
-                var contextAccessor = sp.GetService<IHttpContextAccessor>();
-                options.ClaimGenerator = new MyClaimGenerator(contextAccessor);
+                options.ClaimGenerator = new MyClaimGenerator();
                 options.SecurityKeyProvider = new X509FileSecurityKeyProvider("../cert/test.pfx", Configuration.GetValue<string>("CertPass"));
                 options.ClientStore = new RedisClientStore(Configuration.GetConnectionString("Redis"), "CLIENTS");
             });
@@ -52,7 +48,7 @@ namespace auth
 
         public void Configure(
               IApplicationBuilder app
-            , ITokenIssuer auth2Server
+            , IAuthServer auth2Server
         )
         {
             app.UseForwardedHeaders();
@@ -74,7 +70,8 @@ namespace auth
 
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapPost("/connect/token", auth2Server.TokenHandler);
+                endpoints.MapPost("/connect/token", auth2Server.TokenRequestHandler);
+                endpoints.MapGet("/connect/authorize", auth2Server.AuthorizeRequestHandler);
 
                 endpoints.MapControllerRoute(
                     name: "default",

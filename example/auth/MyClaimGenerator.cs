@@ -3,23 +3,17 @@ using OAuth2Net;
 using OAuth2Net.Client;
 using OAuth2Net.Token;
 using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace auth
 {
-    public class MyClaimGenerator : ClaimGenerator
+    public class MyClaimGenerator : DefaultClaimGeneratorBase
     {
-        public MyClaimGenerator(IHttpContextAccessor httpContextAccessor) : base(httpContextAccessor)
+        public override Task<IList<Claim>> GenerateAsync(HttpContext context, GrantType grantType, IClient client, string[] scopes, string username)
         {
-        }
-
-        public override Task<IList<Claim>> GenerateAsync(GrantType grantType, IClient client, string[] scopes)
-        {
-            var context = HttpContextAccessor.HttpContext;
-            var user = context.User;
-            var claims = user.Claims.ToList();
+            var claims = new List<Claim>();
+            claims.Add(new Claim(OAuth2Consts.Claim_Name, username));
 
             // add issuer, this example just use http address as issuer, you can implement your own logic
             var issuer = $"{context.Request.Scheme}://{context.Request.Host}";
@@ -33,7 +27,6 @@ namespace auth
 
             if (grantType == GrantType.ClientCredentials)
             {
-                claims.Add(new Claim(OAuth2Consts.Claim_Name, client.ID));
                 claims.Add(new Claim(OAuth2Consts.Claim_Role, "1"));
             }
 
