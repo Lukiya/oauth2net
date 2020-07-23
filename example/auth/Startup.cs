@@ -31,10 +31,6 @@ namespace auth
             });
 
             var mvcBuilder = services.AddControllersWithViews();
-            if (HostEnvironment.IsDevelopment())
-            {
-                mvcBuilder.AddRazorRuntimeCompilation();
-            }
 
             services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
                 .AddCookie();

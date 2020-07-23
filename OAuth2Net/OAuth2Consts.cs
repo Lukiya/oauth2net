@@ -25,6 +25,9 @@
         public const string Form_RefreshToken = "refresh_token";
         public const string Form_TokenType = "token_type";
         public const string Form_ExpiresIn = "expires_in";
+        public const string Form_CodeChallenge = "code_challenge";
+        public const string Form_CodeChallengeMethod = "code_challenge_method";
+        public const string Form_CodeVerifier = "code_verifier";
         public const string ResponseType_Token = "token";
         public const string ResponseType_Code = "code";
         public const string GrantType_Client = "client_credentials";
@@ -46,5 +49,8 @@
         public const string Err_access_denied = "access_denied";
         public const string Err_description = "error_description";
         public const string Err_uri = "error_uri";
+        public const string Pkce_Plain = "plain";
+        public const string Pkce_S256 = "S256";
+        public const string Config_OAuth_PkceRequired = "OAuth:PkceRequired";
     }
 }

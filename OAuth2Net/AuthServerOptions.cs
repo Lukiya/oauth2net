@@ -20,5 +20,6 @@ namespace OAuth2Net
         public IClientStore ClientStore { get; set; }
         public IAuthCodeStore AuthCodeStore { get; set; }
         public ITokenStore TokenStore { get; set; }
+        public IPkceValidator PkceValidator { get; set; }
     }
 }

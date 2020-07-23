@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using OAuth2Net.Client;
 using OAuth2Net.Model;
@@ -22,6 +23,8 @@ namespace OAuth2Net
         private readonly IAuthCodeGenerator _authCodeGenerator;
         private readonly IResourceOwnerValidator _resourceOwnerValidator;
         private readonly ILogger<DefaultAuthServer> _logger;
+        private readonly IPkceValidator _pkceValidator;
+        private readonly IConfiguration _configuration;
 
         public RequestDelegate TokenRequestHandler { get; }
         public RequestDelegate AuthorizeRequestHandler { get; }
@@ -36,6 +39,8 @@ namespace OAuth2Net
             , IResourceOwnerValidator resourceOwnerValidator
             , ILogger<DefaultAuthServer> logger
             , AuthServerOptions options
+            , IPkceValidator pkceValidator
+            , IConfiguration configuration
         )
         {
             _clientValidator = clientValidator;
@@ -43,8 +48,11 @@ namespace OAuth2Net
             _resourceOwnerValidator = resourceOwnerValidator;
             _logger = logger;
             _authCodeStore = authCodeStore;
-            this._tokenStore = tokenStore;
-            this._authCodeGenerator = authCodeGenerator;
+            _tokenStore = tokenStore;
+            _authCodeGenerator = authCodeGenerator;
+            _pkceValidator = pkceValidator;
+            _configuration = configuration;
+
             TokenRequestHandler = HandleTokenRequestAsync;
             AuthorizeRequestHandler = HandleAuthorizeRequestAsync;
             AuthServerOptions = options;
@@ -99,12 +107,17 @@ namespace OAuth2Net
             if (!context.User.Identity.IsAuthenticated)
             {
                 await context.ChallengeAsync().ConfigureAwait(false);
+                return;
             }
-            else
+
+            string code;
+            // pkce check
+            var pkceRequired = _configuration.GetValue<bool>(OAuth2Consts.Config_OAuth_PkceRequired);
+            if (!pkceRequired)
             {
-                var code = await _authCodeGenerator.GenerateAsync().ConfigureAwait(false);
-                await _authCodeStore.SaveAsync(
-                    code,
+                // pkce not required, just issue code
+                code = await _authCodeGenerator.GenerateAsync().ConfigureAwait(false);
+                await _authCodeStore.SaveAsync(code,
                     new TokenRequestInfo
                     {
                         ClientID = client.ID,
@@ -115,7 +128,43 @@ namespace OAuth2Net
                 ).ConfigureAwait(false);
 
                 context.Response.Redirect($"{redirectUri}?{OAuth2Consts.Form_Code}={code}&{OAuth2Consts.Form_State}={Uri.EscapeDataString(state)}");
+                return;
             }
+
+            // pkce required
+            var codeChanllenge = context.Request.Query[OAuth2Consts.Form_CodeChallenge].FirstOrDefault();
+            if (string.IsNullOrWhiteSpace(codeChanllenge))
+            {// client didn't provide pkce chanllenge, write error
+                await WriteErrorAsync(context.Response, HttpStatusCode.BadRequest, OAuth2Consts.Err_invalid_request, "code chanllenge is required.").ConfigureAwait(false);
+                return;
+            }
+            // client provided pkce chanllenge
+            var codeChanllengeMethod = context.Request.Query[OAuth2Consts.Form_CodeChallengeMethod].FirstOrDefault();
+            if (string.IsNullOrWhiteSpace(codeChanllengeMethod))
+            {
+                codeChanllengeMethod = OAuth2Consts.Pkce_Plain;
+            }
+            else if (codeChanllengeMethod != OAuth2Consts.Pkce_Plain && codeChanllengeMethod != OAuth2Consts.Pkce_S256)
+            {
+                await WriteErrorAsync(context.Response, HttpStatusCode.BadRequest, OAuth2Consts.Err_invalid_request, "transform algorithm not supported").ConfigureAwait(false);
+                return;
+            }
+
+            // issue code with chanllenge
+            code = await _authCodeGenerator.GenerateAsync().ConfigureAwait(false);
+            await _authCodeStore.SaveAsync(code,
+                new TokenRequestInfo
+                {
+                    ClientID = client.ID,
+                    Scopes = scopesStr,
+                    RedirectUri = redirectUri,
+                    Username = context.User.Identity.Name,
+                    CodeChanllenge = codeChanllenge,
+                    CodeChanllengeMethod = codeChanllengeMethod,
+                }
+            ).ConfigureAwait(false);
+
+            context.Response.Redirect($"{redirectUri}?{OAuth2Consts.Form_Code}={code}&{OAuth2Consts.Form_State}={Uri.EscapeDataString(state)}&{OAuth2Consts.Form_CodeChallenge}={Uri.EscapeDataString(codeChanllenge)}&{OAuth2Consts.Form_CodeChallengeMethod}={codeChanllengeMethod}");
         }
 
         /// <summary>
@@ -218,6 +267,7 @@ namespace OAuth2Net
             var clientID = context.Request.Form[OAuth2Consts.Form_ClientID].FirstOrDefault();
             var redirectUri = context.Request.Form[OAuth2Consts.Form_RedirectUri].FirstOrDefault();
 
+
             var tokenRequestInfo = await _authCodeStore.GetAsync(code).ConfigureAwait(false);
             if (null == tokenRequestInfo)
             {
@@ -237,6 +287,31 @@ namespace OAuth2Net
             {
                 var errDetail = $"redirect uri doesn't match, original: '{tokenRequestInfo.RedirectUri}', current: '{redirectUri}'";
                 await WriteErrorAsync(context.Response, HttpStatusCode.BadRequest, OAuth2Consts.Err_invalid_request, errDetail);
+                return;
+            }
+
+            // pkce check
+            var pkceRequired = _configuration.GetValue<bool>(OAuth2Consts.Config_OAuth_PkceRequired);
+            if (!pkceRequired)
+            {
+                // issue token
+                await IssueTokenByRequestInfoAsync(context, GrantType.AuthorizationCode, client, tokenRequestInfo).ConfigureAwait(false);
+                return;
+            }
+
+            var codeVierifier = context.Request.Form[OAuth2Consts.Form_CodeVerifier].FirstOrDefault();
+            if (string.IsNullOrWhiteSpace(codeVierifier))
+            {
+                // client didn't provide code verifier, write error
+                var errDetail = "code verifier is missing";
+                await WriteErrorAsync(context.Response, HttpStatusCode.BadRequest, OAuth2Consts.Err_invalid_request, errDetail);
+                return;
+            }
+
+            if (!_pkceValidator.Verify(codeVierifier, tokenRequestInfo.CodeChanllenge, tokenRequestInfo.CodeChanllengeMethod))
+            {
+                var errDetail = "code verifier is invalid";
+                await WriteErrorAsync(context.Response, HttpStatusCode.BadRequest, OAuth2Consts.Err_invalid_grant, errDetail);
                 return;
             }
 

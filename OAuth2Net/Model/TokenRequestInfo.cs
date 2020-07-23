@@ -6,5 +6,7 @@
         public string Scopes { get; set; }
         public string RedirectUri { get; set; }
         public string Username { get; set; }
+        public string CodeChanllenge { get; set; }
+        public string CodeChanllengeMethod { get; set; }
     }
 }

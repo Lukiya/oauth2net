@@ -58,12 +58,19 @@ namespace Microsoft.Extensions.DependencyInjection
                 // use default
                 services.AddSingleton<IAuthCodeStore, DefaultAuthCodeStore>();
 
-            // AuthCodeStore
+            // AuthCodeGenerator
             if (options.AuthCodeGenerator != null)
                 services.AddSingleton(_ => options.AuthCodeGenerator);
             else
                 // use default
                 services.AddSingleton<IAuthCodeGenerator, DefaultAuthCodeGenerator>();
+
+            // PkceValidator
+            if (options.PkceValidator != null)
+                services.AddSingleton(_ => options.PkceValidator);
+            else
+                // use default
+                services.AddSingleton<IPkceValidator, DefaultPkceValidator>();
 
             // ClaimGenerator
             if (options.ClaimGenerator != null)
