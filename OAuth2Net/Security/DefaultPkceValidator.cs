@@ -12,8 +12,7 @@
             }
             else if (codeChanllengeMethod == OAuth2Consts.Pkce_S256)
             {
-                var sha256Verifier = OAuth2Utils.SHA256ToBase64URL(codeVerifier);
-                r = sha256Verifier == codeChanllenge;
+                r = codeChanllenge == OAuth2Utils.ToSHA256Base64URL(codeVerifier);
             }
 
             // not suppor other methods
