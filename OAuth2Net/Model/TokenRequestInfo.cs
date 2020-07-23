@@ -1,6 +1,6 @@
 ﻿namespace OAuth2Net.Model
 {
-    public class AuthCodePayload
+    public class TokenRequestInfo
     {
         public string ClientID { get; set; }
         public string Scopes { get; set; }

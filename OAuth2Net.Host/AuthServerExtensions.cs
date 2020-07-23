@@ -42,7 +42,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 services.AddSingleton(_ => options.ResourceOwnerValidator);
             else
                 // use default
-                services.AddSingleton<IResourceOwnerValidator, NotSupportResourceOwnerValidator>();
+                services.AddSingleton<IResourceOwnerValidator, DefaultResourceOwnerValidator>();
 
             // TokenGenerator
             if (options.TokenGenerator != null)
@@ -51,12 +51,19 @@ namespace Microsoft.Extensions.DependencyInjection
                 // use default
                 services.AddSingleton<ITokenGenerator, DefaultTokenGenerator>();
 
-            // AuthorizationCodeStore
-            if (options.AuthorizationCodeStore != null)
-                services.AddSingleton(_ => options.AuthorizationCodeStore);
+            // AuthCodeStore
+            if (options.AuthCodeStore != null)
+                services.AddSingleton(_ => options.AuthCodeStore);
             else
                 // use default
-                services.AddSingleton<IAuthorizationCodeStore, DefaultAuthorizationCodeStore>();
+                services.AddSingleton<IAuthCodeStore, DefaultAuthCodeStore>();
+
+            // AuthCodeStore
+            if (options.AuthCodeGenerator != null)
+                services.AddSingleton(_ => options.AuthCodeGenerator);
+            else
+                // use default
+                services.AddSingleton<IAuthCodeGenerator, DefaultAuthCodeGenerator>();
 
             // ClaimGenerator
             if (options.ClaimGenerator != null)
@@ -65,19 +72,26 @@ namespace Microsoft.Extensions.DependencyInjection
                 // no default, must provde
                 throw new ArgumentNullException($"options.{nameof(options.ClaimGenerator)}");
 
-            // ClaimGenerator
+            // SecurityKeyProvider
             if (options.SecurityKeyProvider != null)
                 services.AddSingleton(_ => options.SecurityKeyProvider);
             else
                 // no default, must provde
                 throw new ArgumentNullException($"options.{nameof(options.SecurityKeyProvider)}");
 
-            // ClaimGenerator
+            // ClientStore
             if (options.ClientStore != null)
                 services.AddSingleton(_ => options.ClientStore);
             else
                 // no default, must provde
                 throw new ArgumentNullException($"options.{nameof(options.ClientStore)}");
+
+            // TokenStore
+            if (options.TokenStore != null)
+                services.AddSingleton(_ => options.TokenStore);
+            else
+                // no default, must provde
+                throw new ArgumentNullException($"options.{nameof(options.TokenStore)}");
 
             return services;
         }

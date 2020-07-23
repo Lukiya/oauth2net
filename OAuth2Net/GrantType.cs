@@ -6,5 +6,6 @@
         AuthorizationCode,
         Implicit,
         ResourceOwner,
+        RefreshToken,
     }
 }

@@ -23,7 +23,7 @@ namespace OAuth2Net.Token
             _claimGenerator = claimGenerator;
         }
 
-        public async Task<string> GenerateAsync(HttpContext context, GrantType grantType, IClient client, string[] scopes, string username)
+        public async Task<string> GenerateAccessTokenAsync(HttpContext context, GrantType grantType, IClient client, string[] scopes, string username)
         {
             var securityKey = _securityKeyProvider.GetSecurityKey();
 
@@ -43,6 +43,11 @@ namespace OAuth2Net.Token
 
             string token = handler.CreateToken(descriptor);
             return token;
+        }
+
+        public Task<string> GenerateRefreshTokenAsync()
+        {
+            return Task.FromResult(Guid.NewGuid().ToString("N") + Guid.NewGuid().ToString("N"));
         }
     }
 }

@@ -17,7 +17,9 @@ namespace OAuth2Net
     {
         private readonly IClientValidator _clientValidator;
         private readonly ITokenGenerator _tokenGenerator;
-        private readonly IAuthorizationCodeStore _authorizationCodeStore;
+        private readonly IAuthCodeStore _authCodeStore;
+        private readonly ITokenStore _tokenStore;
+        private readonly IAuthCodeGenerator _authCodeGenerator;
         private readonly IResourceOwnerValidator _resourceOwnerValidator;
         private readonly ILogger<DefaultAuthServer> _logger;
 
@@ -28,7 +30,9 @@ namespace OAuth2Net
         public DefaultAuthServer(
               IClientValidator clientValidator
             , ITokenGenerator tokenGenerator
-            , IAuthorizationCodeStore authorizationCodeStore
+            , IAuthCodeStore authCodeStore
+            , ITokenStore tokenStore
+            , IAuthCodeGenerator authCodeGenerator
             , IResourceOwnerValidator resourceOwnerValidator
             , ILogger<DefaultAuthServer> logger
             , AuthServerOptions options
@@ -38,7 +42,9 @@ namespace OAuth2Net
             _tokenGenerator = tokenGenerator;
             _resourceOwnerValidator = resourceOwnerValidator;
             _logger = logger;
-            _authorizationCodeStore = authorizationCodeStore;
+            _authCodeStore = authCodeStore;
+            this._tokenStore = tokenStore;
+            this._authCodeGenerator = authCodeGenerator;
             TokenRequestHandler = HandleTokenRequestAsync;
             AuthorizeRequestHandler = HandleAuthorizeRequestAsync;
             AuthServerOptions = options;
@@ -96,13 +102,17 @@ namespace OAuth2Net
             }
             else
             {
-                var code = await _authorizationCodeStore.GenerateAsync(new AuthCodePayload
-                {
-                    ClientID = client.ID,
-                    Scopes = scopesStr,
-                    RedirectUri = redirectUri,
-                    Username = context.User.Identity.Name
-                }).ConfigureAwait(false);
+                var code = await _authCodeGenerator.GenerateAsync().ConfigureAwait(false);
+                await _authCodeStore.SaveAsync(
+                    code,
+                    new TokenRequestInfo
+                    {
+                        ClientID = client.ID,
+                        Scopes = scopesStr,
+                        RedirectUri = redirectUri,
+                        Username = context.User.Identity.Name,
+                    }
+                ).ConfigureAwait(false);
 
                 context.Response.Redirect($"{redirectUri}?{OAuth2Consts.Form_Code}={code}&{OAuth2Consts.Form_State}={Uri.EscapeDataString(state)}");
             }
@@ -119,7 +129,7 @@ namespace OAuth2Net
             }
             else
             {
-                var token = await _tokenGenerator.GenerateAsync(
+                var token = await _tokenGenerator.GenerateAccessTokenAsync(
                     context: context
                     , grantType: GrantType.Implicit
                     , client: client
@@ -173,6 +183,7 @@ namespace OAuth2Net
                     await HandleResourceOwnerTokenRequestAsync(context, clientVerifyResult.Result, scopesStr).ConfigureAwait(false);
                     break;
                 case OAuth2Consts.GrantType_RefreshToken:
+                    await HandleRefreshTokenRequestAsync(context, clientVerifyResult.Result).ConfigureAwait(false);
                     break;
                 default:
                     await WriteErrorAsync(context.Response, HttpStatusCode.BadRequest, OAuth2Consts.Err_unsupported_grant_type).ConfigureAwait(false);
@@ -186,7 +197,7 @@ namespace OAuth2Net
         protected virtual async Task HandleClientCredentialsTokenRequestAsync(HttpContext context, IClient client, string scopesStr)
         {
             // issue token directly
-            var token = await _tokenGenerator.GenerateAsync(
+            var token = await _tokenGenerator.GenerateAccessTokenAsync(
                                 context: context
                               , grantType: GrantType.ClientCredentials
                               , client: client
@@ -207,38 +218,30 @@ namespace OAuth2Net
             var clientID = context.Request.Form[OAuth2Consts.Form_ClientID].FirstOrDefault();
             var redirectUri = context.Request.Form[OAuth2Consts.Form_RedirectUri].FirstOrDefault();
 
-            var payload = await _authorizationCodeStore.GetAsync(code).ConfigureAwait(false);
-            if (null == payload)
+            var tokenRequestInfo = await _authCodeStore.GetAsync(code).ConfigureAwait(false);
+            if (null == tokenRequestInfo)
             {
                 var errDetail = "invalid authorization code";
                 await WriteErrorAsync(context.Response, HttpStatusCode.BadRequest, OAuth2Consts.Err_invalid_request, errDetail);
                 return;
             }
 
-            if (client.ID != clientID || clientID != payload.ClientID)
+            if (client.ID != clientID || clientID != tokenRequestInfo.ClientID)
             {
-                var errDetail = $"client id doesn't match, original: '{payload.ClientID}', current: '{client.ID}'";
+                var errDetail = $"client id doesn't match, original: '{tokenRequestInfo.ClientID}', current: '{client.ID}'";
                 await WriteErrorAsync(context.Response, HttpStatusCode.BadRequest, OAuth2Consts.Err_invalid_request, errDetail);
                 return;
             }
 
-            if (redirectUri != payload.RedirectUri)
+            if (redirectUri != tokenRequestInfo.RedirectUri)
             {
-                var errDetail = $"redirect uri doesn't match, original: '{payload.RedirectUri}', current: '{redirectUri}'";
+                var errDetail = $"redirect uri doesn't match, original: '{tokenRequestInfo.RedirectUri}', current: '{redirectUri}'";
                 await WriteErrorAsync(context.Response, HttpStatusCode.BadRequest, OAuth2Consts.Err_invalid_request, errDetail);
                 return;
             }
 
             // issue token
-            var token = await _tokenGenerator.GenerateAsync(
-                 context: context
-                 , grantType: GrantType.AuthorizationCode
-                 , client: client
-                 , scopes: payload.Scopes.Split(' ')
-                 , username: payload.Username
-             ).ConfigureAwait(false);
-
-            await WriteTokenAsync(context.Response, token, payload.Scopes, "refresh").ConfigureAwait(false);
+            await IssueTokenByRequestInfoAsync(context, GrantType.AuthorizationCode, client, tokenRequestInfo).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -249,22 +252,78 @@ namespace OAuth2Net
             // verify username & password
             var username = context.Request.Form[OAuth2Consts.Form_Username].FirstOrDefault();
             var password = context.Request.Form[OAuth2Consts.Form_Password].FirstOrDefault();
-            var ownerVerifyResult = await _resourceOwnerValidator.VertifyAsync(username, password).ConfigureAwait(false);
-            if (ownerVerifyResult.Result)
-            {
-                var token = await _tokenGenerator.GenerateAsync(
-                      context: context
-                    , grantType: GrantType.ResourceOwner
-                    , client: client
-                    , scopes: scopesStr.Split(' ')
-                    , username: username
-                ).ConfigureAwait(false);
-
-                await WriteTokenAsync(context.Response, token, scopesStr, "refresh").ConfigureAwait(false);
+            var success = await _resourceOwnerValidator.VertifyAsync(username, password).ConfigureAwait(false);
+            if (success)
+            {// pass, issue token
+                await IssueTokenByRequestInfoAsync(context, GrantType.ResourceOwner, client, new TokenRequestInfo
+                {
+                    ClientID = client.ID,
+                    Scopes = scopesStr,
+                    Username = username,
+                }).ConfigureAwait(false);
             }
             else
             {
-                await WriteErrorAsync(context.Response, HttpStatusCode.BadRequest, ownerVerifyResult.MsgCode, ownerVerifyResult.MsgCodeDescription).ConfigureAwait(false);
+                await WriteErrorAsync(context.Response, HttpStatusCode.BadRequest, OAuth2Consts.Err_invalid_grant, "username password doesn't match").ConfigureAwait(false);
+            }
+        }
+
+        /// <summary>
+        /// handle refresh token grant type request
+        /// </summary>
+        private async Task HandleRefreshTokenRequestAsync(HttpContext context, IClient client)
+        {
+            var refreshToken = context.Request.Form[OAuth2Consts.Form_RefreshToken].FirstOrDefault();
+            if (string.IsNullOrWhiteSpace(refreshToken))
+            {
+                var errDetail = "refresh token is missing";
+                await WriteErrorAsync(context.Response, HttpStatusCode.BadRequest, OAuth2Consts.Err_invalid_request, errDetail);
+                return;
+            }
+
+            var tokenRequestInfo = await _tokenStore.GetTokenRequestInfoAsync(refreshToken).ConfigureAwait(false);
+            if (null == tokenRequestInfo)
+            {
+                var errDetail = "refresh token is invalid or expired or revoked";
+                await WriteErrorAsync(context.Response, HttpStatusCode.BadRequest, OAuth2Consts.Err_invalid_grant, errDetail);
+                return;
+            }
+
+            if (client.ID != tokenRequestInfo.ClientID)
+            {
+                var errDetail = $"client id doesn't match, original: '{tokenRequestInfo.ClientID}', current: '{client.ID}'";
+                await WriteErrorAsync(context.Response, HttpStatusCode.BadRequest, OAuth2Consts.Err_invalid_request, errDetail);
+                return;
+            }
+
+            // issue token
+            await IssueTokenByRequestInfoAsync(context, GrantType.RefreshToken, client, tokenRequestInfo).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// issue access token and refresh token
+        /// </summary>
+        protected virtual async Task IssueTokenByRequestInfoAsync(HttpContext context, GrantType grantType, IClient client, TokenRequestInfo tokenRequestInfo)
+        {
+            // issue token
+            var token = await _tokenGenerator.GenerateAccessTokenAsync(
+                   context: context
+                 , grantType: grantType
+                 , client: client
+                 , scopes: tokenRequestInfo.Scopes.Split(' ')
+                 , username: tokenRequestInfo.Username
+             ).ConfigureAwait(false);
+
+            if (client.Grants.Contains(OAuth2Consts.GrantType_RefreshToken))
+            {// allowed to use refresh token
+                var refreshToken = await _tokenGenerator.GenerateRefreshTokenAsync().ConfigureAwait(false);
+                await _tokenStore.SaveRefreshTokenAsync(refreshToken, tokenRequestInfo).ConfigureAwait(false);
+                await WriteTokenAsync(context.Response, token, tokenRequestInfo.Scopes, refreshToken).ConfigureAwait(false);
+            }
+            else
+            {// not allowed to use refresh token
+                await WriteTokenAsync(context.Response, token, tokenRequestInfo.Scopes).ConfigureAwait(false);
+
             }
         }
 

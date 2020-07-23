@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using OAuth2Net;
 using OAuth2Net.Redis.Client;
+using OAuth2Net.Redis.Token;
 using OAuth2Net.Security;
 
 namespace auth
@@ -40,9 +41,12 @@ namespace auth
 
             services.AddAuthServer((sp, options) =>
             {
+                options.ResourceOwnerValidator = new MyResourceOwnerValidator();
                 options.ClaimGenerator = new MyClaimGenerator();
                 options.SecurityKeyProvider = new X509FileSecurityKeyProvider("../cert/test.pfx", Configuration.GetValue<string>("CertPass"));
-                options.ClientStore = new RedisClientStore(Configuration.GetConnectionString("Redis"), "CLIENTS");
+                var rediConnStr = Configuration.GetConnectionString("Redis");
+                options.ClientStore = new RedisClientStore(rediConnStr, "CLIENTS");
+                options.TokenStore = new RedisTokenStore(rediConnStr);
             });
         }
 

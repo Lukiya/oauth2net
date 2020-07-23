@@ -3,9 +3,9 @@ using System.Threading.Tasks;
 
 namespace OAuth2Net.Store
 {
-    public interface IAuthorizationCodeStore
+    public interface IAuthCodeStore
     {
-        Task<string> GenerateAsync(AuthCodePayload payload);
-        Task<AuthCodePayload> GetAsync(string code);
+        Task<string> SaveAsync(string code, TokenRequestInfo requestInfo);
+        Task<TokenRequestInfo> GetAsync(string code);
     }
 }

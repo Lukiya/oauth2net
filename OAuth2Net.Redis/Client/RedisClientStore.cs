@@ -3,43 +3,32 @@ using OAuth2Net.Model;
 using OAuth2Net.Security;
 using OAuth2Net.Store;
 using StackExchange.Redis;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
 namespace OAuth2Net.Redis.Client
 {
-    public class RedisClientStore : IClientStore
+    public class RedisClientStore : RedisBase, IClientStore
     {
         private readonly string _key;
         private readonly ISecertHash _secertHash;
-        private readonly Lazy<IConnectionMultiplexer> _lazyConnectionMultiplexer;
-        private IConnectionMultiplexer _ConnectionMultiplexer => _lazyConnectionMultiplexer.Value;
-
-        private readonly Lazy<IDatabase> _lazyDatabase;
-        protected virtual IDatabase _Database => _lazyDatabase.Value;
 
         public RedisClientStore(string connStr, string key, int db = 0, ISecertHash secertHash = null)
+            : base(connStr, db)
         {
             _key = key;
             _secertHash = secertHash ?? new NoSecertHash();
-            _lazyConnectionMultiplexer = new Lazy<IConnectionMultiplexer>(() =>
-            {
-                return ConnectionMultiplexer.Connect(connStr);
-            });
-
-            _lazyDatabase = new Lazy<IDatabase>(() => _ConnectionMultiplexer.GetDatabase(db));
         }
 
         public IClient GetClient(string clientID)
         {
-            var json = _Database.HashGet(_key, clientID);
+            var json = Database.HashGet(_key, clientID);
             return JsonConvert.DeserializeObject<Model.Client>(json);
         }
         public async Task<IClient> GetClientAsync(string clientID)
         {
-            var json = await _Database.HashGetAsync(_key, clientID).ConfigureAwait(false);
+            var json = await Database.HashGetAsync(_key, clientID).ConfigureAwait(false);
             if (json.IsNull)
             {
                 return null;
@@ -49,12 +38,12 @@ namespace OAuth2Net.Redis.Client
 
         public IDictionary<string, IClient> GetClients()
         {
-            var hashEntries = _Database.HashGetAll(_key);
+            var hashEntries = Database.HashGetAll(_key);
             return hashEntries.ToDictionary(x => x.ToString(), x => (IClient)JsonConvert.DeserializeObject<Model.Client>(x.ToString()));
         }
         public async Task<IDictionary<string, IClient>> GetClientsAsync()
         {
-            var hashEntries = await _Database.HashGetAllAsync(_key).ConfigureAwait(false);
+            var hashEntries = await Database.HashGetAllAsync(_key).ConfigureAwait(false);
             return hashEntries.ToDictionary(x => x.Name.ToString(), x => (IClient)JsonConvert.DeserializeObject<Model.Client>(x.Value.ToString()));
         }
 

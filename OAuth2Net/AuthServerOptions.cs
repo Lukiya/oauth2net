@@ -16,7 +16,9 @@ namespace OAuth2Net
         public ITokenClaimGenerator ClaimGenerator { get; set; }
         public ISecurityKeyProvider SecurityKeyProvider { get; set; }
         public IResourceOwnerValidator ResourceOwnerValidator { get; set; }
+        public IAuthCodeGenerator AuthCodeGenerator { get; set; }
         public IClientStore ClientStore { get; set; }
-        public IAuthorizationCodeStore AuthorizationCodeStore { get; set; }
+        public IAuthCodeStore AuthCodeStore { get; set; }
+        public ITokenStore TokenStore { get; set; }
     }
 }

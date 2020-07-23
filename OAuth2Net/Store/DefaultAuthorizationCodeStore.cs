@@ -1,24 +1,22 @@
 ﻿using OAuth2Net.Model;
-using System;
 using System.Threading.Tasks;
 
 namespace OAuth2Net.Store
 {
-    public class DefaultAuthorizationCodeStore : IAuthorizationCodeStore
+    public class DefaultAuthCodeStore : IAuthCodeStore
     {
-        static AutoCleanDictionary<string, AuthCodePayload> _dic = new AutoCleanDictionary<string, AuthCodePayload>(60, 60);
+        static AutoCleanDictionary<string, TokenRequestInfo> _dic = new AutoCleanDictionary<string, TokenRequestInfo>(60, 60);
 
-        public Task<string> GenerateAsync(AuthCodePayload payload)
+        public Task<string> SaveAsync(string code, TokenRequestInfo requestInfo)
         {
-            var code = Guid.NewGuid().ToString("N") + Guid.NewGuid().ToString("N");
-            _dic.TryAdd(code, payload);
+            _dic.TryAdd(code, requestInfo);
             return Task.FromResult(code);
         }
 
-        public Task<AuthCodePayload> GetAsync(string code)
+        public Task<TokenRequestInfo> GetAsync(string code)
         {
-            _dic.TryRemove(code, out var payload);
-            return Task.FromResult(payload);
+            _dic.TryRemove(code, out var o);
+            return Task.FromResult(o);
         }
     }
 }
