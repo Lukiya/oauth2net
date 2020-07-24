@@ -106,6 +106,7 @@ namespace OAuth2Net
         {
             if (!context.User.Identity.IsAuthenticated)
             {
+                // user not login, redirect to login page
                 await context.ChallengeAsync().ConfigureAwait(false);
                 return;
             }
@@ -182,7 +183,7 @@ namespace OAuth2Net
                     context: context
                     , grantType: GrantType.Implicit
                     , client: client
-                    , scopes: scopesStr.Split(' ')
+                    , scopes: scopesStr.Split(OAuth2Consts.Seperator_Scope)
                     , username: context.User.Identity.Name
                 ).ConfigureAwait(false);
 
@@ -196,21 +197,27 @@ namespace OAuth2Net
         protected virtual async Task HandleTokenRequestAsync(HttpContext context)
         {
             // get parametes from request
-            var authorzation = context.Request.Headers[OAuth2Consts.Header_Authorization].FirstOrDefault();
             var grantTypeStr = context.Request.Form[OAuth2Consts.Form_GrantType].FirstOrDefault();
             var scopesStr = context.Request.Form[OAuth2Consts.Form_Scope].FirstOrDefault();
+
+            var clientCredentialsResult = _clientValidator.ExractClientCredentials(context);
+            if (!clientCredentialsResult.IsSuccess)
+            {
+                await WriteErrorAsync(context.Response, HttpStatusCode.BadRequest, clientCredentialsResult.MsgCode, clientCredentialsResult.MsgCodeDescription).ConfigureAwait(false);
+                return;
+            }
 
             // verify client
             MessageResult<IClient> clientVerifyResult;
             if (grantTypeStr == OAuth2Consts.GrantType_AuthorizationCode)
             {
                 // auth code grant doesn't post scopes 
-                clientVerifyResult = await _clientValidator.VerifyClientAsync(authorzation, grantTypeStr).ConfigureAwait(false);
+                clientVerifyResult = await _clientValidator.VerifyClientAsync(clientCredentialsResult.Result, grantTypeStr).ConfigureAwait(false);
             }
             else
             {
                 // other scopes must post scopes
-                clientVerifyResult = await _clientValidator.VerifyClientAsync(authorzation, grantTypeStr, scopesStr).ConfigureAwait(false);
+                clientVerifyResult = await _clientValidator.VerifyClientAsync(clientCredentialsResult.Result, grantTypeStr, scopesStr).ConfigureAwait(false);
             }
 
             if (!clientVerifyResult.IsSuccess)
@@ -250,7 +257,7 @@ namespace OAuth2Net
                                 context: context
                               , grantType: GrantType.ClientCredentials
                               , client: client
-                              , scopes: scopesStr.Split(' ')
+                              , scopes: scopesStr.Split(OAuth2Consts.Seperator_Scope)
                               , username: client.ID
                           ).ConfigureAwait(false);
 
@@ -385,7 +392,7 @@ namespace OAuth2Net
                    context: context
                  , grantType: grantType
                  , client: client
-                 , scopes: tokenRequestInfo.Scopes.Split(' ')
+                 , scopes: tokenRequestInfo.Scopes.Split(OAuth2Consts.Seperator_Scope)
                  , username: tokenRequestInfo.Username
              ).ConfigureAwait(false);
 

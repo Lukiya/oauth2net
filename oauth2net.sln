@@ -15,7 +15,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "api", "example\api\api.cspr
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OAuth2Net.Host", "OAuth2Net.Host\OAuth2Net.Host.csproj", "{D8E3BEA0-6768-4657-B37E-1FB5A914DCB4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "client", "example\client\client.csproj", "{8490FEAB-5113-4FE5-8A55-45E13198BF8C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "client", "example\client\client.csproj", "{8490FEAB-5113-4FE5-8A55-45E13198BF8C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -1,10 +1,10 @@
-﻿using Newtonsoft.Json;
-using OAuth2Net.Model;
+﻿using OAuth2Net.Model;
 using OAuth2Net.Security;
 using OAuth2Net.Store;
 using StackExchange.Redis;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace OAuth2Net.Redis.Client
@@ -24,7 +24,7 @@ namespace OAuth2Net.Redis.Client
         public IClient GetClient(string clientID)
         {
             var json = Database.HashGet(_key, clientID);
-            return JsonConvert.DeserializeObject<Model.Client>(json);
+            return JsonSerializer.Deserialize<Model.Client>(json);
         }
         public async Task<IClient> GetClientAsync(string clientID)
         {
@@ -33,18 +33,18 @@ namespace OAuth2Net.Redis.Client
             {
                 return null;
             }
-            return JsonConvert.DeserializeObject<Model.Client>(json.ToString());
+            return JsonSerializer.Deserialize<Model.Client>(json.ToString());
         }
 
         public IDictionary<string, IClient> GetClients()
         {
             var hashEntries = Database.HashGetAll(_key);
-            return hashEntries.ToDictionary(x => x.ToString(), x => (IClient)JsonConvert.DeserializeObject<Model.Client>(x.ToString()));
+            return hashEntries.ToDictionary(x => x.ToString(), x => (IClient)JsonSerializer.Deserialize<Model.Client>(x.ToString()));
         }
         public async Task<IDictionary<string, IClient>> GetClientsAsync()
         {
             var hashEntries = await Database.HashGetAllAsync(_key).ConfigureAwait(false);
-            return hashEntries.ToDictionary(x => x.Name.ToString(), x => (IClient)JsonConvert.DeserializeObject<Model.Client>(x.Value.ToString()));
+            return hashEntries.ToDictionary(x => x.Name.ToString(), x => (IClient)JsonSerializer.Deserialize<Model.Client>(x.Value.ToString()));
         }
 
         public IClient Verify(string clientID, string clientSecret)

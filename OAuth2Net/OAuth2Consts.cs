@@ -14,6 +14,7 @@
         public const string Claim_Issuer = "iss";
         public const string Form_GrantType = "grant_type";
         public const string Form_ClientID = "client_id";
+        public const string Form_ClientSecret = "client_secret";
         public const string Form_RedirectUri = "redirect_uri";
         public const string Form_State = "state";
         public const string Form_Scope = "scope";
@@ -52,5 +53,7 @@
         public const string Pkce_Plain = "plain";
         public const string Pkce_S256 = "S256";
         public const string Config_OAuth_PkceRequired = "OAuth:PkceRequired";
+        public const char Seperator_Scope = ' ';
+        public static readonly char[] Seperators_Auth = new char[] { ':' };
     }
 }

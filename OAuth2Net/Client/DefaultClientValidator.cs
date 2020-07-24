@@ -1,6 +1,9 @@
-﻿using OAuth2Net.Model;
+﻿using Microsoft.AspNetCore.Http;
+using OAuth2Net.Model;
 using OAuth2Net.Store;
+using System;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 
 namespace OAuth2Net.Client
@@ -15,11 +18,25 @@ namespace OAuth2Net.Client
         }
 
         /// <summary>
-        /// Verify client id & secret 
+        /// extract client credential from request
         /// </summary>
-        public virtual async Task<MessageResult<IClient>> VerifyClientAsync(string authorzation)
+        public MessageResult<NetworkCredential> ExractClientCredentials(HttpContext context)
         {
-            var mr = new MessageResult<IClient>();
+            var mr = ExractClientCredentialsFromHeader(context);
+            if (mr.IsSuccess) return mr;
+
+            mr = ExractClientCredentialsFromBody(context);
+            return mr;
+        }
+
+        /// <summary>
+        /// extract client credential from request header
+        /// </summary>
+        protected virtual MessageResult<NetworkCredential> ExractClientCredentialsFromHeader(HttpContext context)
+        {
+            var authorzation = context.Request.Headers[OAuth2Consts.Header_Authorization].FirstOrDefault();
+
+            var mr = new MessageResult<NetworkCredential>();
 
             if (string.IsNullOrWhiteSpace(authorzation))
             {
@@ -28,7 +45,7 @@ namespace OAuth2Net.Client
                 return mr;
             }
 
-            var authArray = authorzation.Split(' ');
+            var authArray = authorzation.Split(OAuth2Consts.Seperator_Scope);
             if (authArray.Length != 2 || string.IsNullOrWhiteSpace(authArray[1]))
             {
                 mr.MsgCode = OAuth2Consts.Err_invalid_request;
@@ -37,7 +54,7 @@ namespace OAuth2Net.Client
             }
 
             var authStr = Base64Encoder.Decode(authArray[1]);
-            authArray = authStr.Split(':');
+            authArray = authStr.Split(OAuth2Consts.Seperators_Auth, StringSplitOptions.RemoveEmptyEntries);
 
             if (authArray.Length != 2 || string.IsNullOrWhiteSpace(authArray[0]) || string.IsNullOrWhiteSpace(authArray[1]))
             {
@@ -46,7 +63,46 @@ namespace OAuth2Net.Client
                 return mr;
             }
 
-            var client = await _clientStore.VerifyAsync(authArray[0], authArray[1]).ConfigureAwait(false);
+            mr.Result = new NetworkCredential(authArray[0], authArray[1]);
+            return mr;
+        }
+
+        /// <summary>
+        /// extract client credential from request body
+        /// </summary>
+        protected virtual MessageResult<NetworkCredential> ExractClientCredentialsFromBody(HttpContext context)
+        {
+            var id = context.Request.Form[OAuth2Consts.Form_ClientID].FirstOrDefault();
+
+            var mr = new MessageResult<NetworkCredential>();
+
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                mr.MsgCode = OAuth2Consts.Err_invalid_request;
+                mr.MsgCodeDescription = "client id is missing";
+                return mr;
+            }
+
+            var secret = context.Request.Form[OAuth2Consts.Form_ClientSecret].FirstOrDefault();
+            if (string.IsNullOrWhiteSpace(secret))
+            {
+                mr.MsgCode = OAuth2Consts.Err_invalid_request;
+                mr.MsgCodeDescription = "client secret is missing";
+                return mr;
+            }
+
+            mr.Result = new NetworkCredential(id, secret);
+            return mr;
+        }
+
+        /// <summary>
+        /// Verify client id & secret 
+        /// </summary>
+        public virtual async Task<MessageResult<IClient>> VerifyClientAsync(NetworkCredential credential)
+        {
+            var mr = new MessageResult<IClient>();
+
+            var client = await _clientStore.VerifyAsync(credential.UserName, credential.Password).ConfigureAwait(false);
             if (client == null)
             {
                 mr.MsgCode = OAuth2Consts.Err_invalid_client;
@@ -61,7 +117,7 @@ namespace OAuth2Net.Client
         /// <summary>
         /// Verify client id & secret, grant type, scopes
         /// </summary>
-        public virtual async Task<MessageResult<IClient>> VerifyClientAsync(string authorzation, string grantType)
+        public virtual async Task<MessageResult<IClient>> VerifyClientAsync(NetworkCredential credential, string grantType)
         {
             var mr = new MessageResult<IClient>();
 
@@ -72,7 +128,7 @@ namespace OAuth2Net.Client
                 return mr;
             }
 
-            mr = await VerifyClientAsync(authorzation).ConfigureAwait(false);
+            mr = await VerifyClientAsync(credential).ConfigureAwait(false);
             if (!mr.IsSuccess) return mr;
 
             ValidateGrants(mr, mr.Result, grantType);
@@ -84,7 +140,7 @@ namespace OAuth2Net.Client
         /// <summary>
         /// Verify client id & secret, grant type, scopes
         /// </summary>
-        public virtual async Task<MessageResult<IClient>> VerifyClientAsync(string authorzation, string grantType, string scopesStr)
+        public virtual async Task<MessageResult<IClient>> VerifyClientAsync(NetworkCredential credential, string grantType, string scopesStr)
         {
             var mr = new MessageResult<IClient>();
 
@@ -102,7 +158,7 @@ namespace OAuth2Net.Client
                 return mr;
             }
 
-            mr = await VerifyClientAsync(authorzation).ConfigureAwait(false);
+            mr = await VerifyClientAsync(credential).ConfigureAwait(false);
             if (!mr.IsSuccess) return mr;
 
             ValidateGrants(mr, mr.Result, grantType);
@@ -189,7 +245,7 @@ namespace OAuth2Net.Client
                 return;
             }
 
-            var scopeArray = scopesStr.Split(' ');
+            var scopeArray = scopesStr.Split(OAuth2Consts.Seperator_Scope);
             var notAllowedScopes = scopeArray.Except(client.Scopes);
             if (notAllowedScopes.Any())
             {

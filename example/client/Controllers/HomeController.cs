@@ -1,8 +1,10 @@
 ﻿using client.Models;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Diagnostics;
+using System.Threading.Tasks;
 
 namespace client.Controllers
 {
@@ -14,10 +16,12 @@ namespace client.Controllers
         }
 
         [Authorize]
-        public IActionResult Privacy()
+        public async Task<IActionResult> Privacy()
         {
+            var token = await HttpContext.GetTokenAsync("access_token").ConfigureAwait(false);
+
             Console.WriteLine(User.Identity.Name);
-            return View();
+            return View(nameof(Privacy), token);
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

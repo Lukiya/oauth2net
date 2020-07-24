@@ -35,7 +35,7 @@ namespace auth
             services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
                 .AddCookie();
 
-            services.AddAuthServer((sp, options) =>
+            services.AddOAuth2AuthServer((sp, options) =>
             {
                 options.ResourceOwnerValidator = new MyResourceOwnerValidator();
                 options.ClaimGenerator = new MyClaimGenerator();

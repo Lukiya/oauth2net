@@ -1,13 +1,17 @@
-﻿using OAuth2Net.Model;
+﻿using Microsoft.AspNetCore.Http;
+using OAuth2Net.Model;
+using System.Net;
 using System.Threading.Tasks;
 
 namespace OAuth2Net.Client
 {
     public interface IClientValidator
     {
-        Task<MessageResult<IClient>> VerifyClientAsync(string authorzation);
-        Task<MessageResult<IClient>> VerifyClientAsync(string authorzation, string grantType);
-        Task<MessageResult<IClient>> VerifyClientAsync(string authorzation, string grantType, string scopesStr);
+        MessageResult<NetworkCredential> ExractClientCredentials(HttpContext context);
+
+        Task<MessageResult<IClient>> VerifyClientAsync(NetworkCredential credential);
+        Task<MessageResult<IClient>> VerifyClientAsync(NetworkCredential credential, string grantType);
+        Task<MessageResult<IClient>> VerifyClientAsync(NetworkCredential credential, string grantType, string scopesStr);
         Task<MessageResult<IClient>> VerifyClientAsync(string clientID, string responseType, string redirectURI, string scopesStr, string state);
     }
 }

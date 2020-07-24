@@ -9,7 +9,7 @@ namespace Microsoft.Extensions.DependencyInjection
 {
     public static class AuthServerExtensions
     {
-        public static IServiceCollection AddAuthServer(this IServiceCollection services, Action<IServiceProvider, AuthServerOptions> configOptions)
+        public static IServiceCollection AddOAuth2AuthServer(this IServiceCollection services, Action<IServiceProvider, AuthServerOptions> configOptions)
         {
             var sp = services.BuildServiceProvider();
             var options = new AuthServerOptions();
