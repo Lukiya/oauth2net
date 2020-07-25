@@ -5,6 +5,7 @@ using OAuth2Net.Model;
 using OAuth2Net.Security;
 using System;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 
 namespace OAuth2Net.Token
@@ -47,8 +48,13 @@ namespace OAuth2Net.Token
 
         public Task<string> GenerateRefreshTokenAsync()
         {
-            var token = Guid.NewGuid().ToString("N") + Guid.NewGuid().ToString("N");
-            return Task.FromResult(token);
+            var randomNumber = new byte[64];
+            using (var rng = RandomNumberGenerator.Create())
+            {
+                rng.GetBytes(randomNumber);
+                var r = Base64UrlEncoder.Encode(randomNumber);
+                return Task.FromResult(r);
+            }
         }
     }
 }

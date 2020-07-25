@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.IdentityModel.Tokens;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 
 namespace OAuth2Net.Token
@@ -7,7 +8,13 @@ namespace OAuth2Net.Token
     {
         public Task<string> GenerateAsync()
         {
-            return Task.FromResult(Guid.NewGuid().ToString("N") + Guid.NewGuid().ToString("N"));
+            var randomNumber = new byte[64];
+            using (var rng = RandomNumberGenerator.Create())
+            {
+                rng.GetBytes(randomNumber);
+                var r = Base64UrlEncoder.Encode(randomNumber);
+                return Task.FromResult(r);
+            }
         }
     }
 }
