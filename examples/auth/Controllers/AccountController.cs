@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
+using OAuth2Net;
 using System;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -22,23 +23,27 @@ namespace auth.Controllers
         [HttpPost]
         public async Task<IActionResult> Login(LoginModel model)
         {
+            // Verify username & password first
+
             AuthenticationProperties props = null;
             if (model.RememberLogin)
             {
                 props = new AuthenticationProperties
                 {
-                    IsPersistent = model.RememberLogin,
+                    IsPersistent = true,
                     ExpiresUtc = DateTimeOffset.UtcNow.AddDays(14),
                 };
             };
 
-            var claims = new Claim[] { new Claim(ClaimTypes.Name, model.Username) };
+            var claims = new Claim[] { new Claim(OAuth2Consts.Claim_Name, model.Username) };
             var identity = new ClaimsIdentity(
                 claims
                 , CookieAuthenticationDefaults.AuthenticationScheme
+                , OAuth2Consts.Claim_Name
+                , OAuth2Consts.Claim_Role
             );
             var principal = new ClaimsPrincipal(identity);
-            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(principal), props).ConfigureAwait(false);
+            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, props).ConfigureAwait(false);
 
             return View(model);
         }
