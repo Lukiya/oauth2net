@@ -1,4 +1,4 @@
-﻿using System;
+﻿using Microsoft.IdentityModel.Tokens;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -6,15 +6,15 @@ namespace OAuth2Net
 {
     public static class OAuth2Utils
     {
-        public static string ToBase64URL(byte[] bytes)
-        {
-            var r = Convert.ToBase64String(bytes)
-                  .TrimEnd('=')
-                  .Replace('+', '-')
-                  .Replace('/', '_');
+        //public static string ToBase64URL(byte[] bytes)
+        //{
+        //    var r = Convert.ToBase64String(bytes)
+        //          .TrimEnd('=')
+        //          .Replace('+', '-')
+        //          .Replace('/', '_');
 
-            return r;
-        }
+        //    return r;
+        //}
 
         public static string ToSHA256Base64URL(string str)
         {
@@ -24,7 +24,7 @@ namespace OAuth2Net
                 bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(str));
             }
 
-            return ToBase64URL(bytes);
+            return Base64UrlEncoder.Encode(bytes);
         }
     }
 }

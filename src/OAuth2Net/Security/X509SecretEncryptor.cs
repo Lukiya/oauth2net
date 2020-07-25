@@ -29,12 +29,12 @@ namespace OAuth2Net.Security
             var plainBytes = Encoding.UTF8.GetBytes(intput);
             var encryptedBytes = _publicRsaProvider.Encrypt(plainBytes, RSAEncryptionPadding.Pkcs1);
 
-            return Base64Encoder.EncodeToString(encryptedBytes);
+            return Base64Encoder.Encode(encryptedBytes);
         }
 
         public string Decrypt(string intput)
         {
-            var encryptedBytes = Base64Encoder.DecodeToBytes(intput);
+            var encryptedBytes = Base64Encoder.DecodeBytes(intput);
 
             var plainBytes = _privateRsaProvider.Decrypt(encryptedBytes, RSAEncryptionPadding.Pkcs1);
 

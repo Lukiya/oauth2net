@@ -53,7 +53,7 @@ namespace OAuth2Net.Client
                 return mr;
             }
 
-            var authStr = Base64Encoder.DecodeToString(authArray[1]);
+            var authStr = Base64Encoder.Decode(authArray[1]);
             authArray = authStr.Split(OAuth2Consts.Seperators_Auth, StringSplitOptions.RemoveEmptyEntries);
 
             if (authArray.Length != 2 || string.IsNullOrWhiteSpace(authArray[0]) || string.IsNullOrWhiteSpace(authArray[1]))
