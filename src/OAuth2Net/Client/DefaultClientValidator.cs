@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Microsoft.IdentityModel.Tokens;
 using OAuth2Net.Model;
 using OAuth2Net.Store;
 using System;
@@ -53,7 +54,7 @@ namespace OAuth2Net.Client
                 return mr;
             }
 
-            var authStr = Base64Encoder.Decode(authArray[1]);
+            var authStr = Base64UrlEncoder.Decode(authArray[1]);
             authArray = authStr.Split(OAuth2Consts.Seperators_Auth, StringSplitOptions.RemoveEmptyEntries);
 
             if (authArray.Length != 2 || string.IsNullOrWhiteSpace(authArray[0]) || string.IsNullOrWhiteSpace(authArray[1]))

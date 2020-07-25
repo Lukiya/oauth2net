@@ -1,4 +1,5 @@
-﻿using System.Security.Cryptography;
+﻿using Microsoft.IdentityModel.Tokens;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 
@@ -29,12 +30,12 @@ namespace OAuth2Net.Security
             var plainBytes = Encoding.UTF8.GetBytes(intput);
             var encryptedBytes = _publicRsaProvider.Encrypt(plainBytes, RSAEncryptionPadding.Pkcs1);
 
-            return Base64Encoder.Encode(encryptedBytes);
+            return Base64UrlEncoder.Encode(encryptedBytes);
         }
 
         public string Decrypt(string intput)
         {
-            var encryptedBytes = Base64Encoder.DecodeBytes(intput);
+            var encryptedBytes = Base64UrlEncoder.DecodeBytes(intput);
 
             var plainBytes = _privateRsaProvider.Decrypt(encryptedBytes, RSAEncryptionPadding.Pkcs1);
 
