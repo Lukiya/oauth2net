@@ -4,6 +4,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 16.0.30128.74
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "examples", "examples", "{3D8B2930-6C3D-432B-843E-6D522B30E453}"
+	ProjectSection(SolutionItems) = preProject
+		examples\common.props = examples\common.props
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{8ECF1D59-6726-4876-A81C-CDF3FAE48883}"
 EndProject
