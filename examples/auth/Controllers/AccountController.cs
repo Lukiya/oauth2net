@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
-using OAuth2Net;
+using OAuth2NetCore;
 using System;
 using System.Security.Claims;
 using System.Threading.Tasks;

@@ -5,10 +5,10 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using OAuth2Net;
-using OAuth2Net.Redis.Client;
-using OAuth2Net.Redis.Token;
-using OAuth2Net.Security;
+using OAuth2NetCore;
+using OAuth2NetCore.Redis.Client;
+using OAuth2NetCore.Redis.Token;
+using OAuth2NetCore.Security;
 using System.Security.Cryptography.X509Certificates;
 
 namespace auth

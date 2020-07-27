@@ -1,6 +1,6 @@
 <Project>
     <PropertyGroup>
-        <Description>OAuth2Net</Description>
+        <Description>OAuth2NetCore</Description>
         <Company>LukiyA</Company>
         <Authors>Lukiya</Authors>
         <Version>1.0.0</Version>

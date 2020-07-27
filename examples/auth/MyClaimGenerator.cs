@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
-using OAuth2Net;
-using OAuth2Net.Model;
-using OAuth2Net.Token;
+using OAuth2NetCore;
+using OAuth2NetCore.Model;
+using OAuth2NetCore.Token;
 using System.Collections.Generic;
 using System.Security.Claims;
 using System.Threading.Tasks;

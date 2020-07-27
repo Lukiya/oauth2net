@@ -10,8 +10,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\OAuth2Net.Host\OAuth2Net.Host.csproj" />
-    <ProjectReference Include="..\..\src\OAuth2Net.Redis\OAuth2Net.Redis.csproj" />
+    <ProjectReference Include="..\..\src\OAuth2NetCore.Host\OAuth2NetCore.Host.csproj" />
+    <ProjectReference Include="..\..\src\OAuth2NetCore.Redis\OAuth2NetCore.Redis.csproj" />
   </ItemGroup>
 
 </Project>

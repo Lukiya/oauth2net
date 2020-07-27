@@ -1,4 +1,4 @@
-﻿using OAuth2Net.Security;
+﻿using OAuth2NetCore.Security;
 using System.Threading.Tasks;
 
 namespace auth

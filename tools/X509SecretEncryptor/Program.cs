@@ -1,5 +1,5 @@
 ﻿using Microsoft.Extensions.Configuration;
-using OAuth2Net.Security;
+using OAuth2NetCore.Security;
 using System;
 
 

@@ -11,7 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\OAuth2Net.Host\OAuth2Net.Host.csproj" />
+    <ProjectReference Include="..\..\src\OAuth2NetCore.Host\OAuth2NetCore.Host.csproj" />
   </ItemGroup>
 
 </Project>
