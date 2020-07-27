@@ -19,7 +19,7 @@ namespace auth
             var issuer = $"{context.Request.Scheme}://{context.Request.Host}";
             claims.Add(new Claim(OAuth2Consts.Claim_Issuer, issuer));
 
-            // add audiences, this example just use user requested scopes as audiences
+            // add audiences, this example just use client requested scopes as audiences
             foreach (var scope in scopes)
             {
                 claims.Add(new Claim(OAuth2Consts.Claim_Audience, scope));
