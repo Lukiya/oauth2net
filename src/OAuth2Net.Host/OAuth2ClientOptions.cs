@@ -15,6 +15,7 @@ namespace Microsoft.Extensions.DependencyInjection
         public IEnumerable<string> Scopes { get; set; }
         public bool SaveTokens { get; set; } = true;
         public bool UsePkce { get; set; } = true;
+        public bool AutoRefreshToken { get; set; } = true;
         public Func<JsonWebToken, IEnumerable<Claim>> IdentityClaimsBuilder { get; set; }
     }
 }

@@ -53,6 +53,10 @@
         public const string Pkce_Plain = "plain";
         public const string Pkce_S256 = "S256";
         public const string Config_OAuth_PkceRequired = "OAuth:PkceRequired";
+        public const string Token_Access = "access_token";
+        public const string Token_Refresh = "refresh_token";
+        public const string Token_ExpiresAt = "expires_at";
+        public const string UtcTimesamp = "yyyy-MM-ddTHH:mm:ss.0000000+00:00";
         public const char Seperator_Scope = ' ';
         public static readonly char[] Seperators_Auth = new char[] { ':' };
     }

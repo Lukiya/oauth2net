@@ -1,8 +1,11 @@
-﻿@{
+﻿@using Microsoft.AspNetCore.Authentication
+@{
     ViewData["Title"] = "Home Page";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<h4>Access Token</h4>
+<textarea class="form-control" style="width:100%;height:190px;">@(await Context.GetTokenAsync("access_token")) </textarea>
+<h4>Refresh Token</h4>
+<textarea class="form-control" style="width:100%;height:50px;">@(await Context.GetTokenAsync("refresh_token")) </textarea>
+<h4>expire</h4>
+<textarea class="form-control" style="width:100%;height:50px;">@(await Context.GetTokenAsync("expires_at")) </textarea>
