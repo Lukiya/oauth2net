@@ -72,30 +72,32 @@ namespace Microsoft.Extensions.DependencyInjection
             var exp = DateTime.Parse(expStr);
 
             if (now > exp)
-            {
+            {// expired
                 var refreshToken = context.Properties.GetTokenValue(OAuth2Consts.Token_Refresh);
-                var response = await new HttpClient().RequestRefreshTokenAsync(new RefreshTokenRequest
-                {
-                    Address = options.TokenEndpoint,
-                    ClientId = options.ClientID,
-                    ClientSecret = options.ClientSecret,
-                    RefreshToken = refreshToken,
-                    Scope = string.Join(OAuth2Consts.Seperator_Scope, options.Scopes)
-                });
+                if (!string.IsNullOrWhiteSpace(refreshToken))
+                {// refresh token exists
+                    var response = await new HttpClient().RequestRefreshTokenAsync(new RefreshTokenRequest
+                    {
+                        Address = options.TokenEndpoint,
+                        ClientId = options.ClientID,
+                        ClientSecret = options.ClientSecret,
+                        RefreshToken = refreshToken,
+                        Scope = string.Join(OAuth2Consts.Seperator_Scope, options.Scopes)
+                    });
 
-                if (!response.IsError)
-                {
-                    context.Properties.UpdateTokenValue(OAuth2Consts.Token_Access, response.AccessToken);
-                    context.Properties.UpdateTokenValue(OAuth2Consts.Token_Refresh, response.RefreshToken);
-                    var expireAt = DateTime.UtcNow.AddSeconds(response.ExpiresIn).ToString(OAuth2Consts.UtcTimesamp);
-                    context.Properties.UpdateTokenValue(OAuth2Consts.Token_ExpiresAt, expireAt);
-                    context.ShouldRenew = true;
+                    if (!response.IsError)
+                    {// refresh no error
+                        context.Properties.UpdateTokenValue(OAuth2Consts.Token_Access, response.AccessToken);
+                        context.Properties.UpdateTokenValue(OAuth2Consts.Token_Refresh, response.RefreshToken);
+                        var expireAt = DateTime.UtcNow.AddSeconds(response.ExpiresIn).ToString(OAuth2Consts.UtcTimesamp);
+                        context.Properties.UpdateTokenValue(OAuth2Consts.Token_ExpiresAt, expireAt);
+                        context.ShouldRenew = true;
+                        return;
+                    }
                 }
-                else
-                {
-                    // refresh failed
-                    context.RejectPrincipal();
-                }
+
+                // reject principal
+                context.RejectPrincipal();
             }
         }
 
