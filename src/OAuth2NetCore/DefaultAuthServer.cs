@@ -275,7 +275,7 @@ namespace OAuth2NetCore
             var redirectUri = context.Request.Form[OAuth2Consts.Form_RedirectUri].FirstOrDefault();
 
 
-            var tokenRequestInfo = await _authCodeStore.GetAsync(code).ConfigureAwait(false);
+            var tokenRequestInfo = await _authCodeStore.GetThenRemoveAsync(code).ConfigureAwait(false);
             if (null == tokenRequestInfo)
             {
                 var errDetail = "invalid authorization code";

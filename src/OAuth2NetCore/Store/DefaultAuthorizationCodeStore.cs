@@ -13,7 +13,7 @@ namespace OAuth2NetCore.Store
             return Task.CompletedTask;
         }
 
-        public Task<TokenRequestInfo> GetAsync(string code)
+        public Task<TokenRequestInfo> GetThenRemoveAsync(string code)
         {
             _dic.TryRemove(code, out var o);
             return Task.FromResult(o);
