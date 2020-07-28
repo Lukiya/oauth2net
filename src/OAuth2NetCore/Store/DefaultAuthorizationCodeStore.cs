@@ -7,10 +7,10 @@ namespace OAuth2NetCore.Store
     {
         static AutoCleanDictionary<string, TokenRequestInfo> _dic = new AutoCleanDictionary<string, TokenRequestInfo>(60, 60);
 
-        public Task<string> SaveAsync(string code, TokenRequestInfo requestInfo)
+        public Task SaveAsync(string code, TokenRequestInfo requestInfo)
         {
             _dic.TryAdd(code, requestInfo);
-            return Task.FromResult(code);
+            return Task.CompletedTask;
         }
 
         public Task<TokenRequestInfo> GetAsync(string code)

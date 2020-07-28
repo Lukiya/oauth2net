@@ -5,7 +5,7 @@ namespace OAuth2NetCore.Store
 {
     public interface IAuthCodeStore
     {
-        Task<string> SaveAsync(string code, TokenRequestInfo requestInfo);
+        Task SaveAsync(string code, TokenRequestInfo requestInfo);
         Task<TokenRequestInfo> GetAsync(string code);
     }
 }
