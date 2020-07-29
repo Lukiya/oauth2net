@@ -103,8 +103,15 @@ namespace OAuth2NetCore.Security
         {
             var mr = new MessageResult<IClient>();
 
-            var client = await _clientStore.VerifyAsync(credential.UserName, credential.Password).ConfigureAwait(false);
+            var client = await _clientStore.GetClientAsync(credential.UserName).ConfigureAwait(false);
             if (client == null)
+            {
+                mr.MsgCode = OAuth2Consts.Err_invalid_client;
+                mr.MsgCodeDescription = "client not exists";
+                return mr;
+            }
+
+            if (credential.Password != client.Secret)
             {
                 mr.MsgCode = OAuth2Consts.Err_invalid_client;
                 mr.MsgCodeDescription = "invalid client";

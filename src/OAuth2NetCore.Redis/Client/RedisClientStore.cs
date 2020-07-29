@@ -72,25 +72,25 @@ namespace OAuth2NetCore.Redis.Client
             return dic;
         }
 
-        public IClient Verify(string clientID, string clientSecret)
-        {
-            var client = GetClient(clientID);
-            if (client != null && client.Secret == clientSecret)
-            {
-                return client;
-            }
+        //public IClient Verify(string clientID, string clientSecret)
+        //{
+        //    var client = GetClient(clientID);
+        //    if (client != null && client.Secret == clientSecret)
+        //    {
+        //        return client;
+        //    }
 
-            return null;
-        }
-        public async Task<IClient> VerifyAsync(string clientID, string clientSecret)
-        {
-            var client = await GetClientAsync(clientID).ConfigureAwait(false);
-            if (client != null && client.Secret == clientSecret)
-            {
-                return client;
-            }
+        //    return null;
+        //}
+        //public async Task<IClient> VerifyAsync(string clientID, string clientSecret)
+        //{
+        //    var client = await GetClientAsync(clientID).ConfigureAwait(false);
+        //    if (client != null && client.Secret == clientSecret)
+        //    {
+        //        return client;
+        //    }
 
-            return null;
-        }
+        //    return null;
+        //}
     }
 }
