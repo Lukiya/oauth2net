@@ -7,7 +7,7 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 
-namespace OAuth2NetCore.Client
+namespace OAuth2NetCore.Security
 {
     public class DefaultClientValidator : IClientValidator
     {

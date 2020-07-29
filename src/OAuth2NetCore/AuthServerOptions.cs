@@ -1,5 +1,4 @@
 ﻿using Microsoft.IdentityModel.Tokens;
-using OAuth2NetCore.Client;
 using OAuth2NetCore.Security;
 using OAuth2NetCore.Store;
 using OAuth2NetCore.Token;

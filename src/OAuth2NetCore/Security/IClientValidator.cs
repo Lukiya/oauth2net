@@ -3,7 +3,7 @@ using OAuth2NetCore.Model;
 using System.Net;
 using System.Threading.Tasks;
 
-namespace OAuth2NetCore.Client
+namespace OAuth2NetCore.Security
 {
     public interface IClientValidator
     {

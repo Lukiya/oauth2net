@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using OAuth2NetCore.Client;
 using OAuth2NetCore.Model;
 using OAuth2NetCore.Security;
 using OAuth2NetCore.Store;
