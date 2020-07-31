@@ -152,13 +152,6 @@ namespace OAuth2NetCore.Security
         {
             var mr = new MessageResult<IClient>();
 
-            if (string.IsNullOrWhiteSpace(grantType))
-            {
-                mr.MsgCode = OAuth2Consts.Err_invalid_request;
-                mr.MsgCodeDescription = "grant type is missing";
-                return mr;
-            }
-
             if (string.IsNullOrWhiteSpace(scopesStr))
             {
                 mr.MsgCode = OAuth2Consts.Err_invalid_request;
@@ -166,10 +159,7 @@ namespace OAuth2NetCore.Security
                 return mr;
             }
 
-            mr = await VerifyClientAsync(credential).ConfigureAwait(false);
-            if (!mr.IsSuccess) return mr;
-
-            ValidateGrants(mr, mr.Result, grantType);
+            mr = await this.VerifyClientAsync(credential, grantType).ConfigureAwait(false);
             if (!mr.IsSuccess) return mr;
 
             ValidateScopes(mr, mr.Result, scopesStr);

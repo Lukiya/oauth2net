@@ -8,7 +8,7 @@ namespace auth
     /// </summary>
     public class MyResourceOwnerValidator : IResourceOwnerValidator
     {
-        public Task<bool> VertifyAsync(string username, string password)
+        public Task<bool> VerifyAsync(string username, string password)
         {
             return Task.FromResult(username == password);
         }
