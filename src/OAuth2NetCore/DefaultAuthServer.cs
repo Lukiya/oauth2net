@@ -62,13 +62,6 @@ namespace OAuth2NetCore
         /// </summary>
         protected virtual async Task HandleAuthorizeRequestAsync(HttpContext context)
         {
-            if (!context.User.Identity.IsAuthenticated)
-            {
-                // user not login, redirect to login page
-                await context.ChallengeAsync().ConfigureAwait(false);
-                return;
-            }
-
             var respType = context.Request.Query[OAuth2Consts.Form_ResponseType].FirstOrDefault();
             var clientID = context.Request.Query[OAuth2Consts.Form_ClientID].FirstOrDefault();
             var redirectURI = context.Request.Query[OAuth2Consts.Form_RedirectUri].FirstOrDefault();
@@ -86,6 +79,13 @@ namespace OAuth2NetCore
             if (!clientVerifyResult.IsSuccess)
             {
                 await ErrorHandler(context.Response, HttpStatusCode.BadRequest, clientVerifyResult.MsgCode, clientVerifyResult.MsgCodeDescription).ConfigureAwait(false);
+                return;
+            }
+
+            if (!context.User.Identity.IsAuthenticated)
+            {
+                // user not login, redirect to login page
+                await context.ChallengeAsync().ConfigureAwait(false);
                 return;
             }
 
