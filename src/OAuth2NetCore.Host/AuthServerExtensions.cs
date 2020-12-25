@@ -18,7 +18,6 @@ namespace Microsoft.Extensions.DependencyInjection
 
             // TokenIssuer
             if (options.AuthServer != null)
-                // use default
                 services.AddSingleton(_ => options.AuthServer);
             else
                 // use default
@@ -71,28 +70,28 @@ namespace Microsoft.Extensions.DependencyInjection
                 services.AddSingleton(_ => options.ClaimGenerator);
             else
                 // no default, must provde
-                throw new ArgumentNullException($"options.{nameof(options.ClaimGenerator)}");
+                throw new ArgumentNullException($"{nameof(options)}.{nameof(options.ClaimGenerator)}");
 
             // SecurityKeyProvider
             if (options.SecurityKeyProvider != null)
                 services.AddSingleton(_ => options.SecurityKeyProvider);
             else
                 // no default, must provde
-                throw new ArgumentNullException($"options.{nameof(options.SecurityKeyProvider)}");
+                throw new ArgumentNullException($"{nameof(options)}.{nameof(options.SecurityKeyProvider)}");
 
             // ClientStore
             if (options.ClientStore != null)
                 services.AddSingleton(_ => options.ClientStore);
             else
                 // no default, must provde
-                throw new ArgumentNullException($"options.{nameof(options.ClientStore)}");
+                throw new ArgumentNullException($"{nameof(options)}.{nameof(options.ClientStore)}");
 
             // TokenStore
             if (options.TokenStore != null)
                 services.AddSingleton(_ => options.TokenStore);
             else
                 // no default, must provde
-                throw new ArgumentNullException($"options.{nameof(options.TokenStore)}");
+                throw new ArgumentNullException($"{nameof(options)}.{nameof(options.TokenStore)}");
 
             return services;
         }

@@ -29,18 +29,12 @@ namespace api
             });
 
             services.AddControllers();
-            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                .AddJwtBearer(jwtOptions =>
-                {
-                    jwtOptions.TokenValidationParameters = new TokenValidationParameters
-                    {
-                        NameClaimType = "name",
-                        RoleClaimType = "role",
-                        IssuerSigningKey = new X509SecurityKey(new X509Certificate2("../cert/test.cer")),
-                        ValidIssuer = "https://p.ecp.com",
-                        ValidAudience = "ecpapi",
-                    };
-                });
+            services.AddOAuth2Resource(o =>
+            {
+                o.IssuerSigningKey = new X509SecurityKey(new X509Certificate2("../cert/test.cer"));
+                o.ValidAudience = "testapi";
+                o.ValidIssuer = "https://p.test.com";
+            });
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

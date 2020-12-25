@@ -14,9 +14,9 @@ namespace Microsoft.Extensions.DependencyInjection
 {
     public static class ClientExtensions
     {
-        public static IServiceCollection AddOAuth2Client(this IServiceCollection services, Action<OAuth2ClientOptions> configOptions)
+        public static IServiceCollection AddOAuth2Client(this IServiceCollection services, Action<ClientOptions> configOptions)
         {
-            var options = new OAuth2ClientOptions();
+            var options = new ClientOptions();
             configOptions(options);
             CheckOptions(options);
 
@@ -65,7 +65,7 @@ namespace Microsoft.Extensions.DependencyInjection
             return services;
         }
 
-        private static async Task ValidatePrincipal(CookieValidatePrincipalContext context, OAuth2ClientOptions options)
+        private static async Task ValidatePrincipal(CookieValidatePrincipalContext context, ClientOptions options)
         {
             var expStr = context.Properties.GetTokenValue(OAuth2Consts.Token_ExpiresAt);
             var now = DateTime.Now;
@@ -103,12 +103,23 @@ namespace Microsoft.Extensions.DependencyInjection
             }
         }
 
-        private static void CheckOptions(OAuth2ClientOptions options)
+        private static void CheckOptions(ClientOptions options)
         {
             if (options.IdentityClaimsBuilder == null)
             {
                 options.IdentityClaimsBuilder = BuildIdentityClaims;
             }
+
+            if (string.IsNullOrWhiteSpace(options.ClientID))
+                throw new ArgumentNullException($"{options}.{options.ClientID}");
+            if (string.IsNullOrWhiteSpace(options.ClientSecret))
+                throw new ArgumentNullException($"{options}.{options.ClientSecret}");
+            if (string.IsNullOrWhiteSpace(options.AuthorizationEndpoint))
+                throw new ArgumentNullException($"{options}.{options.AuthorizationEndpoint}");
+            if (string.IsNullOrWhiteSpace(options.TokenEndpoint))
+                throw new ArgumentNullException($"{options}.{options.TokenEndpoint}");
+            if (string.IsNullOrWhiteSpace(options.CallbackPath))
+                throw new ArgumentNullException($"{options}.{options.CallbackPath}");
         }
 
         private static IEnumerable<Claim> BuildIdentityClaims(JsonWebToken token)

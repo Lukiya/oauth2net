@@ -38,7 +38,7 @@ namespace auth
 
             services.AddOAuth2AuthServer((sp, options) =>
             {
-                var certPath = "../cert/test.pfx";
+                var certPath = Configuration.GetValue<string>("CertPath");
                 var certPass = Configuration.GetValue<string>("CertPass");
                 var cert = new X509Certificate2(certPath, certPass);
 

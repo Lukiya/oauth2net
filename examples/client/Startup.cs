@@ -27,14 +27,13 @@ namespace client
 
             services.AddControllersWithViews();
 
-            services.AddOAuth2Client(options =>
+            services.AddOAuth2Client(o =>
             {
-                options.Scopes = Configuration.GetSection("OAuth:Scopes").GetChildren().Select(x => x.Value);
-                options.ClientID = Configuration.GetValue<string>("OAuth:ClientID");
-                options.ClientSecret = Configuration.GetValue<string>("OAuth:ClientSecret");
-                options.AuthorizationEndpoint = Configuration.GetValue<string>("OAuth:AuthorizationEndpoint");
-                options.TokenEndpoint = Configuration.GetValue<string>("OAuth:TokenEndpoint");
-                options.CallbackPath = "/signin-oauth";
+                o.Scopes = Configuration.GetSection("OAuth:Scopes").GetChildren().Select(x => x.Value);
+                o.ClientID = Configuration.GetValue<string>("OAuth:ClientID");
+                o.ClientSecret = Configuration.GetValue<string>("OAuth:ClientSecret");
+                o.AuthorizationEndpoint = Configuration.GetValue<string>("OAuth:AuthorizationEndpoint");
+                o.TokenEndpoint = Configuration.GetValue<string>("OAuth:TokenEndpoint");
             });
         }
 
