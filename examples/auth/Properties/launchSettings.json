@@ -3,7 +3,7 @@
     "profiles": {
         "auth": {
             "commandName": "Project",
-            "applicationUrl": "http://localhost:6001",
+            "applicationUrl": "http://0.0.0.0:6001",
             "environmentVariables": {
                 "ASPNETCORE_ENVIRONMENT": "Development",
                 "ASPNETCORE_HOSTINGSTARTUPASSEMBLIES": "Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation"

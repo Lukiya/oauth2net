@@ -111,15 +111,15 @@ namespace Microsoft.Extensions.DependencyInjection
             }
 
             if (string.IsNullOrWhiteSpace(options.ClientID))
-                throw new ArgumentNullException($"{options}.{options.ClientID}");
+                throw new ArgumentNullException($"{nameof(options)}.{nameof(options.ClientID)}");
             if (string.IsNullOrWhiteSpace(options.ClientSecret))
-                throw new ArgumentNullException($"{options}.{options.ClientSecret}");
+                throw new ArgumentNullException($"{nameof(options)}.{nameof(options.ClientSecret)}");
             if (string.IsNullOrWhiteSpace(options.AuthorizationEndpoint))
-                throw new ArgumentNullException($"{options}.{options.AuthorizationEndpoint}");
+                throw new ArgumentNullException($"{nameof(options)}.{nameof(options.AuthorizationEndpoint)}");
             if (string.IsNullOrWhiteSpace(options.TokenEndpoint))
-                throw new ArgumentNullException($"{options}.{options.TokenEndpoint}");
+                throw new ArgumentNullException($"{nameof(options)}.{nameof(options.TokenEndpoint)}");
             if (string.IsNullOrWhiteSpace(options.CallbackPath))
-                throw new ArgumentNullException($"{options}.{options.CallbackPath}");
+                throw new ArgumentNullException($"{nameof(options)}.{nameof(options.CallbackPath)}");
         }
 
         private static IEnumerable<Claim> BuildIdentityClaims(JsonWebToken token)

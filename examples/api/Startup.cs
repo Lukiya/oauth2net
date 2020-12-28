@@ -23,11 +23,6 @@ namespace api
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services.Configure<ForwardedHeadersOptions>(options =>
-            {
-                options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-            });
-
             services.AddControllers();
             services.AddOAuth2Resource(o =>
             {
@@ -39,7 +34,7 @@ namespace api
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            app.UseForwardedHeaders();
+            app.UseReverseProxy();
 
             if (env.IsDevelopment())
             {

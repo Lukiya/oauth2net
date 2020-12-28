@@ -7,17 +7,52 @@ namespace OAuth2NetCore
 {
     public class AuthServerOptions
     {
-        public string SigningAlgorithm { get; set; } = SecurityAlgorithms.RsaSsaPssSha256;
-        public IAuthServer AuthServer { get; set; }
-        public IClientValidator ClientValidator { get; set; }
-        public ITokenGenerator TokenGenerator { get; set; }
+        /// <summary>
+        /// Required
+        /// </summary>
         public ITokenClaimGenerator ClaimGenerator { get; set; }
+        /// <summary>
+        /// Required
+        /// </summary>
         public ISecurityKeyProvider SecurityKeyProvider { get; set; }
+        /// <summary>
+        /// Required
+        /// </summary>
         public IResourceOwnerValidator ResourceOwnerValidator { get; set; }
-        public IAuthCodeGenerator AuthCodeGenerator { get; set; }
+        /// <summary>
+        /// Required
+        /// </summary>
         public IClientStore ClientStore { get; set; }
-        public IAuthCodeStore AuthCodeStore { get; set; }
+        /// <summary>
+        /// Required
+        /// </summary>
         public ITokenStore TokenStore { get; set; }
+
+        /// <summary>
+        /// Optional
+        /// </summary>
+        public IAuthServer AuthServer { get; set; }
+        /// <summary>
+        /// Optional
+        /// </summary>
+        public IClientValidator ClientValidator { get; set; }
+        /// <summary>
+        /// Optional
+        /// </summary>
+        public ITokenGenerator TokenGenerator { get; set; }
+        /// <summary>
+        /// Optional
+        /// </summary>
+        public IAuthCodeGenerator AuthCodeGenerator { get; set; }
+        /// <summary>
+        /// Optional
+        /// </summary>
+        public IAuthCodeStore AuthCodeStore { get; set; }
+        /// <summary>
+        /// Optional
+        /// </summary>
         public IPkceValidator PkceValidator { get; set; }
+
+        public string SigningAlgorithm { get; set; } = SecurityAlgorithms.RsaSsaPssSha256;
     }
 }

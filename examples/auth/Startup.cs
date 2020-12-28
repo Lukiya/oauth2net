@@ -26,11 +26,6 @@ namespace auth
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services.Configure<ForwardedHeadersOptions>(options =>
-            {
-                options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-            });
-
             var mvcBuilder = services.AddControllersWithViews();
 
             services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
@@ -40,13 +35,14 @@ namespace auth
             {
                 var certPath = Configuration.GetValue<string>("CertPath");
                 var certPass = Configuration.GetValue<string>("CertPass");
+                var rediConnStr = Configuration.GetConnectionString("Redis");
                 var cert = new X509Certificate2(certPath, certPass);
 
                 options.ResourceOwnerValidator = new MyResourceOwnerValidator();
                 options.ClaimGenerator = new MyClaimGenerator();
-                var rediConnStr = Configuration.GetConnectionString("Redis");
+
                 options.SecurityKeyProvider = new X509SecurityKeyProvider(cert);
-                options.ClientStore = new RedisClientStore(rediConnStr, "CLIENTS", secretEncryptor: new X509SecretEncryptor(cert));
+                options.ClientStore = new RedisClientStore(rediConnStr, "test:Clients", secretEncryptor: new X509SecretEncryptor(cert));
                 options.TokenStore = new RedisTokenStore(rediConnStr, secretEncryptor: new X509SecretEncryptor(cert));
             });
         }
@@ -56,7 +52,7 @@ namespace auth
             , IAuthServer auth2Server
         )
         {
-            app.UseForwardedHeaders();
+            app.UseReverseProxy();
 
             if (HostEnvironment.IsDevelopment())
             {

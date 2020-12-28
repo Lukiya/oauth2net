@@ -16,6 +16,13 @@ namespace Microsoft.Extensions.DependencyInjection
 
             services.AddSingleton(options);
 
+            CheckOptions(services, options);
+
+            return services;
+        }
+
+        private static void CheckOptions(IServiceCollection services, AuthServerOptions options)
+        {
             // TokenIssuer
             if (options.AuthServer != null)
                 services.AddSingleton(_ => options.AuthServer);
@@ -34,8 +41,7 @@ namespace Microsoft.Extensions.DependencyInjection
             if (options.ResourceOwnerValidator != null)
                 services.AddSingleton(_ => options.ResourceOwnerValidator);
             else
-                // use default
-                services.AddSingleton<IResourceOwnerValidator, DefaultResourceOwnerValidator>();
+                throw new ArgumentNullException($"{nameof(options)}.{nameof(options.ResourceOwnerValidator)}");
 
             // TokenGenerator
             if (options.TokenGenerator != null)
@@ -92,8 +98,6 @@ namespace Microsoft.Extensions.DependencyInjection
             else
                 // no default, must provde
                 throw new ArgumentNullException($"{nameof(options)}.{nameof(options.TokenStore)}");
-
-            return services;
         }
     }
 }
