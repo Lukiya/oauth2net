@@ -1,9 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-    <PropertyGroup>
-        <TargetFramework>netstandard2.0</TargetFramework>
-        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-        <PackageOutputPath>$(SolutionDir)dist\</PackageOutputPath>
-    </PropertyGroup>
+    <Import Project="../common.props" />
 
     <ItemGroup>
         <PackageReference Include="StackExchange.Redis" Version="2.2.4" />
