@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using OAuth2NetCore.Model;
 using OAuth2NetCore.Store;
@@ -12,10 +13,12 @@ namespace OAuth2NetCore.Security
     public class DefaultClientValidator : IClientValidator
     {
         private readonly IClientStore _clientStore;
+        private readonly ILogger<DefaultClientValidator> _logger;
 
-        public DefaultClientValidator(IClientStore clientStore)
+        public DefaultClientValidator(IClientStore clientStore, ILogger<DefaultClientValidator> logger)
         {
             _clientStore = clientStore;
+            _logger = logger;
         }
 
         /// <summary>
@@ -43,6 +46,7 @@ namespace OAuth2NetCore.Security
             {
                 mr.MsgCode = OAuth2Consts.Err_invalid_request;
                 mr.MsgCodeDescription = "no authorization header";
+                _logger.LogWarning(mr.MsgCodeDescription);
                 return mr;
             }
 
@@ -51,6 +55,7 @@ namespace OAuth2NetCore.Security
             {
                 mr.MsgCode = OAuth2Consts.Err_invalid_request;
                 mr.MsgCodeDescription = "invalid authorization header format";
+                _logger.LogWarning(mr.MsgCodeDescription);
                 return mr;
             }
 
@@ -61,6 +66,7 @@ namespace OAuth2NetCore.Security
             {
                 mr.MsgCode = OAuth2Consts.Err_invalid_request;
                 mr.MsgCodeDescription = "invalid authorization header segments length";
+                _logger.LogWarning(mr.MsgCodeDescription);
                 return mr;
             }
 
@@ -81,6 +87,7 @@ namespace OAuth2NetCore.Security
             {
                 mr.MsgCode = OAuth2Consts.Err_invalid_request;
                 mr.MsgCodeDescription = "client id is missing";
+                _logger.LogWarning(mr.MsgCodeDescription);
                 return mr;
             }
 
@@ -89,6 +96,7 @@ namespace OAuth2NetCore.Security
             {
                 mr.MsgCode = OAuth2Consts.Err_invalid_request;
                 mr.MsgCodeDescription = "client secret is missing";
+                _logger.LogWarning(mr.MsgCodeDescription);
                 return mr;
             }
 
@@ -108,6 +116,7 @@ namespace OAuth2NetCore.Security
             {
                 mr.MsgCode = OAuth2Consts.Err_invalid_client;
                 mr.MsgCodeDescription = "client not exists";
+                _logger.LogWarning(mr.MsgCodeDescription);
                 return mr;
             }
 
@@ -115,6 +124,7 @@ namespace OAuth2NetCore.Security
             {
                 mr.MsgCode = OAuth2Consts.Err_invalid_client;
                 mr.MsgCodeDescription = "invalid client";
+                _logger.LogWarning(mr.MsgCodeDescription);
                 return mr;
             }
 
@@ -133,6 +143,7 @@ namespace OAuth2NetCore.Security
             {
                 mr.MsgCode = OAuth2Consts.Err_invalid_request;
                 mr.MsgCodeDescription = "grant type is missing";
+                _logger.LogWarning(mr.MsgCodeDescription);
                 return mr;
             }
 
@@ -156,6 +167,7 @@ namespace OAuth2NetCore.Security
             {
                 mr.MsgCode = OAuth2Consts.Err_invalid_request;
                 mr.MsgCodeDescription = "scope is missing";
+                _logger.LogWarning(mr.MsgCodeDescription);
                 return mr;
             }
 
@@ -178,24 +190,28 @@ namespace OAuth2NetCore.Security
             {
                 mr.MsgCode = OAuth2Consts.Err_invalid_request;
                 mr.MsgCodeDescription = "client id is missing";
+                _logger.LogWarning(mr.MsgCodeDescription);
                 return mr;
             }
             if (string.IsNullOrWhiteSpace(responseType))
             {
                 mr.MsgCode = OAuth2Consts.Err_invalid_request;
                 mr.MsgCodeDescription = "response type is missing";
+                _logger.LogWarning(mr.MsgCodeDescription);
                 return mr;
             }
             if (string.IsNullOrWhiteSpace(redirectURI))
             {
                 mr.MsgCode = OAuth2Consts.Err_invalid_request;
                 mr.MsgCodeDescription = "redirect uri is missing";
+                _logger.LogWarning(mr.MsgCodeDescription);
                 return mr;
             }
             if (string.IsNullOrWhiteSpace(scopesStr))
             {
                 mr.MsgCode = OAuth2Consts.Err_invalid_request;
                 mr.MsgCodeDescription = "scope is missing";
+                _logger.LogWarning(mr.MsgCodeDescription);
                 return mr;
             }
 
@@ -204,6 +220,7 @@ namespace OAuth2NetCore.Security
             {
                 mr.MsgCode = OAuth2Consts.Err_invalid_client;
                 mr.MsgCodeDescription = "invalid client";
+                _logger.LogWarning(mr.MsgCodeDescription);
                 return mr;
             }
 
@@ -220,17 +237,54 @@ namespace OAuth2NetCore.Security
             return mr;
         }
 
+        /// <summary>
+        /// verify client id & redirect uri
+        /// </summary>
+        public async Task<MessageResult<IClient>> VerifyClientAsync(string clientID, string redirectURI)
+        {
+            var mr = new MessageResult<IClient>();
+            if (string.IsNullOrWhiteSpace(clientID))
+            {
+                mr.MsgCode = OAuth2Consts.Err_invalid_request;
+                mr.MsgCodeDescription = "client id is missing";
+                _logger.LogWarning(mr.MsgCodeDescription);
+                return mr;
+            }
+            if (string.IsNullOrWhiteSpace(redirectURI))
+            {
+                mr.MsgCode = OAuth2Consts.Err_invalid_request;
+                mr.MsgCodeDescription = "redirect uri is missing";
+                _logger.LogWarning(mr.MsgCodeDescription);
+                return mr;
+            }
+
+            var client = await _clientStore.GetClientAsync(clientID).ConfigureAwait(false);
+            if (null == client)
+            {
+                mr.MsgCode = OAuth2Consts.Err_invalid_client;
+                mr.MsgCodeDescription = "invalid client";
+                _logger.LogWarning(mr.MsgCodeDescription);
+                return mr;
+            }
+
+            ValidateRedirectURIs(mr, client, redirectURI);
+
+            return mr;
+        }
+
         protected virtual void ValidateRedirectURIs(MessageResult<IClient> mr, IClient client, string redirectURI)
         {
             if (client.RedirectUris == null || !client.RedirectUris.Any())
             {
                 mr.MsgCode = OAuth2Consts.Err_access_denied;
                 mr.MsgCodeDescription = $"no redirect uri is allowed for '{client.ID}'";
+                _logger.LogWarning(mr.MsgCodeDescription);
             }
             else if (!client.RedirectUris.Contains(redirectURI))
             {
                 mr.MsgCode = OAuth2Consts.Err_access_denied;
                 mr.MsgCodeDescription = $"'{redirectURI}' is allowed for '{client.ID}'";
+                _logger.LogWarning(mr.MsgCodeDescription);
             }
         }
 
@@ -240,6 +294,7 @@ namespace OAuth2NetCore.Security
             {
                 mr.MsgCode = OAuth2Consts.Err_invalid_scope;
                 mr.MsgCodeDescription = $"no scope is allowed for '{client.ID}'";
+                _logger.LogWarning(mr.MsgCodeDescription);
                 return;
             }
 
@@ -249,6 +304,7 @@ namespace OAuth2NetCore.Security
             {
                 mr.MsgCode = OAuth2Consts.Err_invalid_scope;
                 mr.MsgCodeDescription = $"scope '{string.Join(", ", notAllowedScopes)}' is not allowed for '{client.ID}'";
+                _logger.LogWarning(mr.MsgCodeDescription);
             }
         }
 
@@ -258,6 +314,7 @@ namespace OAuth2NetCore.Security
             {
                 mr.MsgCode = OAuth2Consts.Err_unauthorized_client;
                 mr.MsgCodeDescription = $"'{grantType}' grant is not allowed for '{client.ID}'";
+                _logger.LogWarning(mr.MsgCodeDescription);
             }
         }
 

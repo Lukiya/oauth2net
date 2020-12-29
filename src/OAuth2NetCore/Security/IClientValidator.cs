@@ -13,5 +13,6 @@ namespace OAuth2NetCore.Security
         Task<MessageResult<IClient>> VerifyClientAsync(NetworkCredential credential, string grantType);
         Task<MessageResult<IClient>> VerifyClientAsync(NetworkCredential credential, string grantType, string scopesStr);
         Task<MessageResult<IClient>> VerifyClientAsync(string clientID, string responseType, string redirectURI, string scopesStr, string state);
+        Task<MessageResult<IClient>> VerifyClientAsync(string clientID, string logoutRedirectURI);
     }
 }

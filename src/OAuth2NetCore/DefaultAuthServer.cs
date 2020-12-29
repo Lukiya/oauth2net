@@ -27,6 +27,7 @@ namespace OAuth2NetCore
 
         public RequestDelegate TokenRequestHandler { get; }
         public RequestDelegate AuthorizeRequestHandler { get; }
+        public RequestDelegate EndSessionRequestHandler { get; }
         public AuthServerOptions AuthServerOptions { get; }
 
         public DefaultAuthServer(
@@ -54,6 +55,7 @@ namespace OAuth2NetCore
 
             TokenRequestHandler = HandleTokenRequestAsync;
             AuthorizeRequestHandler = HandleAuthorizeRequestAsync;
+            EndSessionRequestHandler = HandleEndSessionRequestAsync;
             AuthServerOptions = options;
         }
 
@@ -108,7 +110,7 @@ namespace OAuth2NetCore
         /// <summary>
         /// handle authorization code request
         /// </summary>
-        protected virtual async Task AuthorizationCodeRequestHandler(HttpContext context, IClient client, string scopesStr, string redirectUri, string state)
+        protected virtual async Task AuthorizationCodeRequestHandler(HttpContext context, IClient client, string scopesStr, string redirectURI, string state)
         {
             string code;
             // pkce check
@@ -122,12 +124,12 @@ namespace OAuth2NetCore
                     {
                         ClientID = client.ID,
                         Scopes = scopesStr,
-                        RedirectUri = redirectUri,
+                        RedirectUri = redirectURI,
                         Username = context.User.Identity.Name,
                     }
                 ).ConfigureAwait(false);
 
-                context.Response.Redirect($"{redirectUri}?{OAuth2Consts.Form_Code}={code}&{OAuth2Consts.Form_State}={Uri.EscapeDataString(state)}");
+                context.Response.Redirect($"{redirectURI}?{OAuth2Consts.Form_Code}={code}&{OAuth2Consts.Form_State}={Uri.EscapeDataString(state)}");
                 return;
             }
 
@@ -157,14 +159,14 @@ namespace OAuth2NetCore
                 {
                     ClientID = client.ID,
                     Scopes = scopesStr,
-                    RedirectUri = redirectUri,
+                    RedirectUri = redirectURI,
                     Username = context.User.Identity.Name,
                     CodeChanllenge = codeChanllenge,
                     CodeChanllengeMethod = codeChanllengeMethod,
                 }
             ).ConfigureAwait(false);
 
-            context.Response.Redirect($"{redirectUri}?{OAuth2Consts.Form_Code}={code}&{OAuth2Consts.Form_State}={Uri.EscapeDataString(state)}&{OAuth2Consts.Form_CodeChallenge}={Uri.EscapeDataString(codeChanllenge)}&{OAuth2Consts.Form_CodeChallengeMethod}={codeChanllengeMethod}");
+            context.Response.Redirect($"{redirectURI}?{OAuth2Consts.Form_Code}={code}&{OAuth2Consts.Form_State}={Uri.EscapeDataString(state)}&{OAuth2Consts.Form_CodeChallenge}={Uri.EscapeDataString(codeChanllenge)}&{OAuth2Consts.Form_CodeChallengeMethod}={codeChanllengeMethod}");
         }
 
         /// <summary>
@@ -240,6 +242,28 @@ namespace OAuth2NetCore
         }
 
         /// <summary>
+        /// handle end session request
+        /// </summary>
+        protected virtual async Task HandleEndSessionRequestAsync(HttpContext context)
+        {
+            var clientID = context.Request.Form[OAuth2Consts.Form_ClientID].FirstOrDefault();
+            var redirectURI = context.Request.Form[OAuth2Consts.Form_RedirectUri].FirstOrDefault();
+            var state = context.Request.Form[OAuth2Consts.Form_State].FirstOrDefault();
+
+            var mr = await _clientValidator.VerifyClientAsync(clientID, redirectURI);
+            if (!mr.IsSuccess)
+            {
+                await ErrorHandler(context.Response, HttpStatusCode.BadRequest, mr.MsgCode, mr.MsgCodeDescription).ConfigureAwait(false);
+                return;
+            }
+
+            // sign out
+            await context.SignOutAsync().ConfigureAwait(false);
+
+            context.Response.Redirect($"{redirectURI}?{OAuth2Consts.Form_State}={Uri.EscapeDataString(state)}");
+        }
+
+        /// <summary>
         /// handle client credentials token request
         /// </summary>
         protected virtual async Task HandleClientCredentialsTokenRequestAsync(HttpContext context, IClient client, string scopesStr)
@@ -264,7 +288,7 @@ namespace OAuth2NetCore
             // exchange token by using auhorization code
             var code = context.Request.Form[OAuth2Consts.Form_Code].FirstOrDefault();
             var clientID = context.Request.Form[OAuth2Consts.Form_ClientID].FirstOrDefault();
-            var redirectUri = context.Request.Form[OAuth2Consts.Form_RedirectUri].FirstOrDefault();
+            var redirectURI = context.Request.Form[OAuth2Consts.Form_RedirectUri].FirstOrDefault();
 
 
             var tokenRequestInfo = await _authCodeStore.GetThenRemoveAsync(code).ConfigureAwait(false);
@@ -282,9 +306,9 @@ namespace OAuth2NetCore
                 return;
             }
 
-            if (redirectUri != tokenRequestInfo.RedirectUri)
+            if (redirectURI != tokenRequestInfo.RedirectUri)
             {
-                var errDetail = $"redirect uri doesn't match, original: '{tokenRequestInfo.RedirectUri}', current: '{redirectUri}'";
+                var errDetail = $"redirect uri doesn't match, original: '{tokenRequestInfo.RedirectUri}', current: '{redirectURI}'";
                 await ErrorHandler(context.Response, HttpStatusCode.BadRequest, OAuth2Consts.Err_invalid_request, errDetail);
                 return;
             }
