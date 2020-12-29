@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
@@ -8,6 +9,8 @@ namespace Microsoft.Extensions.DependencyInjection
     {
         public static IServiceCollection AddOAuth2Resource(this IServiceCollection services, Action<ResourceOptions> configOptions)
         {
+            JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
+
             var options = new ResourceOptions();
             configOptions(options);
             CheckOptions(options);

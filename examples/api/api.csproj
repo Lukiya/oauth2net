@@ -2,6 +2,7 @@
     <Import Project="../common.props" />
 
     <ItemGroup>
+      <ProjectReference Include="..\..\..\..\SyncSoftInc\SyncSoft.App\src\SyncSoft.App.Host\SyncSoft.App.Host.csproj" />
       <ProjectReference Include="..\..\src\OAuth2NetCore.Host\OAuth2NetCore.Host.csproj" />
     </ItemGroup>
 </Project>

@@ -1,9 +1,11 @@
 ﻿using auth.Models;
+using auth.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using OAuth2NetCore;
 using System;
+using System.Composition;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
@@ -11,6 +13,13 @@ namespace auth.Controllers
 {
     public class AccountController : Controller
     {
+        // *******************************************************************************************************************************
+        #region -  Property(ies)  -
+
+        [Import]
+        public Lazy<IUserService> LazyUserService { get; set; }
+
+        #endregion
         // *******************************************************************************************************************************
         #region -  Login  -
 
@@ -24,26 +33,33 @@ namespace auth.Controllers
         public async Task<IActionResult> Login(LoginModel model)
         {
             // Verify username & password first
-
-            AuthenticationProperties props = null;
-            if (model.RememberLogin)
+            var isValid = await LazyUserService.Value.VerifyAsync(model.Username, model.Password).ConfigureAwait(false);
+            if (isValid)
             {
-                props = new AuthenticationProperties
+                AuthenticationProperties props = null;
+                if (model.RememberLogin)
                 {
-                    IsPersistent = true,
-                    ExpiresUtc = DateTimeOffset.UtcNow.AddDays(14),
+                    props = new AuthenticationProperties
+                    {
+                        IsPersistent = true,
+                        ExpiresUtc = DateTimeOffset.UtcNow.AddDays(14),
+                    };
                 };
-            };
 
-            var claims = new Claim[] { new Claim(OAuth2Consts.Claim_Name, model.Username) };
-            var identity = new ClaimsIdentity(
-                claims
-                , CookieAuthenticationDefaults.AuthenticationScheme
-                , OAuth2Consts.Claim_Name
-                , OAuth2Consts.Claim_Role
-            );
-            var principal = new ClaimsPrincipal(identity);
-            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, props).ConfigureAwait(false);
+                var claims = new Claim[] { new Claim(OAuth2Consts.Claim_Name, model.Username) };
+                var identity = new ClaimsIdentity(
+                    claims
+                    , CookieAuthenticationDefaults.AuthenticationScheme
+                    , OAuth2Consts.Claim_Name
+                    , OAuth2Consts.Claim_Role
+                );
+                var principal = new ClaimsPrincipal(identity);
+                await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, props).ConfigureAwait(false);
+            }
+            else
+            {
+                ModelState.AddModelError("a", "incorrect username and password");
+            }
 
             return View(model);
         }

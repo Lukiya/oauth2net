@@ -4,16 +4,17 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
+using SimpleInjector;
+using SyncSoft.App.SimpleInjector;
 using System.Security.Cryptography.X509Certificates;
 
 namespace api
 {
     public class Startup
     {
+        static readonly Container _container = ContainerFactory.CreateWithPropertyInjection<ImportPropertySelectionBehavior>();
         public Startup(IConfiguration configuration)
         {
-            JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
             Configuration = configuration;
         }
 
@@ -28,11 +29,19 @@ namespace api
                 o.ValidAudience = "testapi";
                 o.ValidIssuer = "https://p.test.com";
             });
+
+            services.AddSimpleInjector(_container, options =>
+            {
+                options.AddAspNetCore()
+                    .AddControllerActivation();
+            });
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             app.UseReverseProxy();
+
+            app.UseSimpleInjector(_container);
 
             if (env.IsDevelopment())
             {
@@ -48,6 +57,8 @@ namespace api
             {
                 endpoints.MapControllers();
             });
+
+            _container.Verify();
         }
     }
 }

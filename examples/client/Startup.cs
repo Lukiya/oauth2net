@@ -3,12 +3,15 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using SimpleInjector;
+using SyncSoft.App.SimpleInjector;
 using System.Linq;
 
 namespace client
 {
     public class Startup
     {
+        static readonly Container _container = ContainerFactory.CreateWithPropertyInjection<ImportPropertySelectionBehavior>();
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
@@ -29,12 +32,20 @@ namespace client
                 o.AuthorizationEndpoint = Configuration.GetValue<string>("OAuth:AuthorizationEndpoint");
                 o.TokenEndpoint = Configuration.GetValue<string>("OAuth:TokenEndpoint");
             });
+
+            services.AddSimpleInjector(_container, options =>
+            {
+                options.AddAspNetCore()
+                    .AddControllerActivation();
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             app.UseReverseProxy();
+
+            app.UseSimpleInjector(_container);
 
             if (env.IsDevelopment())
             {
@@ -57,6 +68,8 @@ namespace client
                     name: "default",
                     pattern: "{controller=Home}/{action=Index}/{id?}");
             });
+
+            _container.Verify();
         }
     }
 }

@@ -1,3 +1,4 @@
+using auth.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -8,12 +9,15 @@ using OAuth2NetCore;
 using OAuth2NetCore.Redis.Client;
 using OAuth2NetCore.Redis.Token;
 using OAuth2NetCore.Security;
+using SimpleInjector;
+using SyncSoft.App.SimpleInjector;
 using System.Security.Cryptography.X509Certificates;
 
 namespace auth
 {
     public class Startup
     {
+        static readonly Container _container = ContainerFactory.CreateWithPropertyInjection<ImportPropertySelectionBehavior>();
         public Startup(IConfiguration configuration, IWebHostEnvironment env)
         {
             Configuration = configuration;
@@ -25,7 +29,7 @@ namespace auth
 
         public void ConfigureServices(IServiceCollection services)
         {
-            var mvcBuilder = services.AddControllersWithViews();
+            services.AddControllersWithViews();
 
             services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
                 .AddCookie();
@@ -44,7 +48,16 @@ namespace auth
                 options.ClientStore = new RedisClientStore(rediConnStr, "test:Clients", secretEncryptor: new X509SecretEncryptor(cert));
                 options.TokenStore = new RedisTokenStore(rediConnStr, secretEncryptor: new X509SecretEncryptor(cert));
             });
+
+            services.AddSimpleInjector(_container, options =>
+            {
+                options.AddAspNetCore()
+                    .AddControllerActivation();
+            });
+
+            services.AddLazySingleton<IUserService, UserService>();
         }
+
 
         public void Configure(
               IApplicationBuilder app
@@ -52,6 +65,8 @@ namespace auth
         )
         {
             app.UseReverseProxy();
+
+            app.UseSimpleInjector(_container);
 
             if (HostEnvironment.IsDevelopment())
             {
@@ -77,6 +92,8 @@ namespace auth
                     name: "default",
                     pattern: "{controller=Home}/{action=Index}/{id?}");
             });
+
+            _container.Verify();
         }
     }
 }
