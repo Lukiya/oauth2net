@@ -23,7 +23,7 @@ namespace api
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
-            services.AddOAuth2Resource(o =>
+            services.AddOAuth2Resource((sp, o) =>
             {
                 o.IssuerSigningKey = new X509SecurityKey(new X509Certificate2("../cert/test.cer"));
                 o.ValidAudience = "testapi";

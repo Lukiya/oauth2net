@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace auth
 {
-    public class MyClaimGenerator : ITokenClaimGenerator
+    public class MyTokenClaimGenerator : ITokenClaimGenerator
     {
         public Task<IList<Claim>> GenerateAsync(HttpContext context, GrantType grantType, IClient client, string[] scopes, string username)
         {

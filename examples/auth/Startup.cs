@@ -9,6 +9,8 @@ using OAuth2NetCore;
 using OAuth2NetCore.Redis.Client;
 using OAuth2NetCore.Redis.Token;
 using OAuth2NetCore.Security;
+using OAuth2NetCore.Store;
+using OAuth2NetCore.Token;
 using SimpleInjector;
 using SyncSoft.App.SimpleInjector;
 using System.Security.Cryptography.X509Certificates;
@@ -34,19 +36,24 @@ namespace auth
             services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
                 .AddCookie();
 
+            var rediConnStr = Configuration.GetConnectionString("Redis");
+            var certPath = Configuration.GetValue<string>("CertPath");
+            var certPass = Configuration.GetValue<string>("CertPass");
+            var cert = new X509Certificate2(certPath, certPass);
+
+            services.AddSingleton<IClientStore>(sp => new RedisClientStore(rediConnStr, "test:Clients", secretEncryptor: new X509SecretEncryptor(cert)));
+            services.AddSingleton<ITokenStore>(sp => new RedisTokenStore(rediConnStr, secretEncryptor: new X509SecretEncryptor(cert)));
+            services.AddSingleton<ISecurityKeyProvider>(sp => new X509SecurityKeyProvider(cert));
+            services.AddSingleton<IResourceOwnerValidator, MyResourceOwnerValidator>();
+            services.AddSingleton<ITokenClaimGenerator, MyTokenClaimGenerator>();
+
             services.AddOAuth2AuthServer((sp, options) =>
             {
-                var certPath = Configuration.GetValue<string>("CertPath");
-                var certPass = Configuration.GetValue<string>("CertPass");
-                var rediConnStr = Configuration.GetConnectionString("Redis");
-                var cert = new X509Certificate2(certPath, certPass);
-
-                options.ResourceOwnerValidator = new MyResourceOwnerValidator();
-                options.ClaimGenerator = new MyClaimGenerator();
-
-                options.SecurityKeyProvider = new X509SecurityKeyProvider(cert);
-                options.ClientStore = new RedisClientStore(rediConnStr, "test:Clients", secretEncryptor: new X509SecretEncryptor(cert));
-                options.TokenStore = new RedisTokenStore(rediConnStr, secretEncryptor: new X509SecretEncryptor(cert));
+                options.ResourceOwnerValidator = sp.GetService<IResourceOwnerValidator>();
+                options.ClaimGenerator = sp.GetService<ITokenClaimGenerator>();
+                options.SecurityKeyProvider = sp.GetService<ISecurityKeyProvider>();
+                options.ClientStore = sp.GetService<IClientStore>();
+                options.TokenStore = sp.GetService<ITokenStore>();
             });
 
             services.AddSimpleInjector(_container, options =>

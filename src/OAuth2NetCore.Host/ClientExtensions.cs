@@ -14,10 +14,11 @@ namespace Microsoft.Extensions.DependencyInjection
 {
     public static class ClientExtensions
     {
-        public static IServiceCollection AddOAuth2Client(this IServiceCollection services, Action<ClientOptions> configOptions)
+        public static IServiceCollection AddOAuth2Client(this IServiceCollection services, Action<IServiceProvider, ClientOptions> configOptions)
         {
+            var sp = services.BuildServiceProvider();
             var options = new ClientOptions();
-            configOptions(options);
+            configOptions(sp, options);
             CheckOptions(options);
 
             services.AddAuthentication(authOptions =>

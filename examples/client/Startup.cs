@@ -24,7 +24,7 @@ namespace client
         {
             services.AddControllersWithViews();
 
-            services.AddOAuth2Client(o =>
+            services.AddOAuth2Client((sp, o) =>
             {
                 o.Scopes = Configuration.GetSection("OAuth:Scopes").GetChildren().Select(x => x.Value);
                 o.ClientID = Configuration.GetValue<string>("OAuth:ClientID");
