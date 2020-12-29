@@ -29,6 +29,10 @@ namespace auth
             {
                 claims.Add(new Claim(OAuth2Consts.Claim_Role, "1"));
             }
+            else
+            {
+                claims.Add(new Claim(OAuth2Consts.Claim_Role, "4"));
+            }
 
             return Task.FromResult<IList<Claim>>(claims);
         }
