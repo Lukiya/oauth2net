@@ -6,5 +6,6 @@ namespace OAuth2NetCore
     {
         RequestDelegate AuthorizeRequestHandler { get; }
         RequestDelegate TokenRequestHandler { get; }
+        RequestDelegate EndSessionRequestHandler { get; }
     }
 }
