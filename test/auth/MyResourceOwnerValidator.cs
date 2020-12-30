@@ -1,16 +1,21 @@
-﻿using OAuth2NetCore.Security;
+﻿using auth.Services;
+using OAuth2NetCore.Security;
 using System.Threading.Tasks;
 
 namespace auth
 {
-    /// <summary>
-    /// Just for testing, DO NOT USE
-    /// </summary>
     public class MyResourceOwnerValidator : IResourceOwnerValidator
     {
+        private readonly IUserService _userService;
+
+        public MyResourceOwnerValidator(IUserService userService)
+        {
+            _userService = userService;
+        }
+
         public Task<bool> VerifyAsync(string username, string password)
         {
-            return Task.FromResult(username == password);
+            return _userService.VerifyAsync(username, password);
         }
     }
 }

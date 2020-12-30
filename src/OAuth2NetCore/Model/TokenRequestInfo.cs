@@ -1,4 +1,6 @@
-﻿namespace OAuth2NetCore.Model
+﻿using System;
+
+namespace OAuth2NetCore.Model
 {
     public class TokenRequestInfo
     {
@@ -8,5 +10,6 @@
         public string Username { get; set; }
         public string CodeChanllenge { get; set; }
         public string CodeChanllengeMethod { get; set; }
+        public DateTimeOffset RefreshTokenExpire { get; set; }
     }
 }

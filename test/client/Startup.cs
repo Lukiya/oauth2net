@@ -5,7 +5,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using OAuth2NetCore;
 using OAuth2NetCore.Redis.State;
-using OAuth2NetCore.Store;
 using shared;
 using SimpleInjector;
 using System.Collections.Concurrent;
@@ -25,17 +24,14 @@ namespace client
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            var clientOptions = Configuration.GetSection("OAuth").Get<ClientOptions>();
+            var clientOptions = Configuration.GetSection("OAuth2").Get<ClientOptions>();
             var rediConnStr = Configuration.GetConnectionString("Redis");
 
             services.AddControllersWithViews();
 
-            services.AddSingleton(clientOptions);
-            services.AddSingleton<IStateStore>(sp => new RedisStateStore(rediConnStr));
-
-            services.AddOAuth2Client(clientOptions, (sp, o) =>
+            services.AddOAuth2Client(clientOptions, o =>
             {
-                o.StateStore = sp.GetService<IStateStore>();
+                o.StateStoreFactory = _ => new RedisStateStore(rediConnStr);
             });
 
             services.AddSimpleInjector(_container, options =>

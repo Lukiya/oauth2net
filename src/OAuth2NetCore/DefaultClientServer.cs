@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
+using OAuth2NetCore.Security;
 using OAuth2NetCore.Store;
 using System;
 using System.Linq;
@@ -11,32 +12,37 @@ namespace OAuth2NetCore
     public class DefaultClientServer : IClientServer
     {
         private readonly IStateStore _stateStore;
+        private readonly IStateGenerator _stateGenerator;
         private readonly ClientOptions _options;
         public RequestDelegate SignOutRequestHandler { get; }
         public RequestDelegate SignOutCallbackRequestHandler { get; }
 
         public DefaultClientServer(
             IStateStore stateStore
+            , IStateGenerator stateGenerator
             , ClientOptions options
         )
         {
             _stateStore = stateStore;
+            _stateGenerator = stateGenerator;
             _options = options;
 
             SignOutRequestHandler = HandleSignOutRequestAsync;
             SignOutCallbackRequestHandler = HandleSignOutCallbackRequestAsync;
         }
 
+        /// <summary>
+        /// handle sign out request
+        /// </summary>
         protected virtual async Task HandleSignOutRequestAsync(HttpContext context)
         {
-            // save return url to store
+            // save return url to state store
             var returnUrl = context.Request.Query[OAuth2Consts.Form_ReturnUrl].FirstOrDefault() ?? Uri.EscapeDataString("/");
-            var state = Guid.NewGuid().ToString("n");
-            await _stateStore.AddAsync(state, returnUrl);
+            var state = await _stateGenerator.GenerateAsync().ConfigureAwait(false);
+            await _stateStore.SaveAsync(state, returnUrl).ConfigureAwait(false);
 
             // redirect to auth server
             var clientID = _options.ClientID;
-            GetUri(context.Request);
             var callbackUri = new UriBuilder();
             callbackUri.Scheme = context.Request.Scheme;
             callbackUri.Host = context.Request.Host.Value;
@@ -45,16 +51,9 @@ namespace OAuth2NetCore
             context.Response.Redirect(targetUri);
         }
 
-        private static Uri GetUri(HttpRequest request)
-        {
-            var builder = new UriBuilder();
-            builder.Scheme = request.Scheme;
-            builder.Host = request.Host.Value;
-            builder.Path = request.Path;
-            builder.Query = request.QueryString.ToUriComponent();
-            return builder.Uri;
-        }
-
+        /// <summary>
+        ///  handle sign out callback request
+        /// </summary>
         protected virtual async Task HandleSignOutCallbackRequestAsync(HttpContext context)
         {
             var state = context.Request.Query[OAuth2Consts.Form_State].FirstOrDefault();

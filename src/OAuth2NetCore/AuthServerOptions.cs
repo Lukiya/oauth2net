@@ -2,57 +2,65 @@
 using OAuth2NetCore.Security;
 using OAuth2NetCore.Store;
 using OAuth2NetCore.Token;
+using System;
 
 namespace OAuth2NetCore
 {
     public class AuthServerOptions
     {
         /// <summary>
-        /// Required
+        /// Required (has default)
         /// </summary>
-        public ITokenClaimGenerator ClaimGenerator { get; set; }
-        /// <summary>
-        /// Required
-        /// </summary>
-        public ISecurityKeyProvider SecurityKeyProvider { get; set; }
-        /// <summary>
-        /// Required
-        /// </summary>
-        public IResourceOwnerValidator ResourceOwnerValidator { get; set; }
-        /// <summary>
-        /// Required
-        /// </summary>
-        public IClientStore ClientStore { get; set; }
-        /// <summary>
-        /// Required
-        /// </summary>
-        public ITokenStore TokenStore { get; set; }
-
-        /// <summary>
-        /// Optional
-        /// </summary>
-        public IAuthServer AuthServer { get; set; }
-        /// <summary>
-        /// Optional
-        /// </summary>
-        public IClientValidator ClientValidator { get; set; }
-        /// <summary>
-        /// Optional
-        /// </summary>
-        public ITokenGenerator TokenGenerator { get; set; }
-        /// <summary>
-        /// Optional
-        /// </summary>
-        public IAuthCodeGenerator AuthCodeGenerator { get; set; }
-        /// <summary>
-        /// Optional
-        /// </summary>
-        public IAuthCodeStore AuthCodeStore { get; set; }
-        /// <summary>
-        /// Optional
-        /// </summary>
-        public IPkceValidator PkceValidator { get; set; }
-
         public string SigningAlgorithm { get; set; } = SecurityAlgorithms.RsaSsaPssSha256;
+        /// <summary>
+        /// Required (has default)
+        /// </summary>
+        public bool PKCERequired { get; set; } = true;
+        /// <summary>
+        /// Required
+        /// </summary>
+        public Func<IServiceProvider, ITokenClaimBuilder> TokenClaimBuilderFactory { get; set; }
+        /// <summary>
+        /// Required
+        /// </summary>
+        public Func<IServiceProvider, ISecurityKeyProvider> SecurityKeyProviderFactory { get; set; }
+        /// <summary>
+        /// Required
+        /// </summary>
+        public Func<IServiceProvider, IResourceOwnerValidator> ResourceOwnerValidatorFactory { get; set; }
+        /// <summary>
+        /// Required
+        /// </summary>
+        public Func<IServiceProvider, IClientStore> ClientStoreFactory { get; set; }
+        /// <summary>
+        /// Required
+        /// </summary>
+        public Func<IServiceProvider, ITokenStore> TokenStoreFactory { get; set; }
+
+        /// <summary>
+        /// Optional
+        /// </summary>
+        public Func<IServiceProvider, IAuthServer> AuthServerFactory { get; set; }
+        /// <summary>
+        /// Optional
+        /// </summary>
+        public Func<IServiceProvider, IClientValidator> ClientValidatorFactory { get; set; }
+        /// <summary>
+        /// Optional
+        /// </summary>
+        public Func<IServiceProvider, ITokenGenerator> TokenGeneratorFactory { get; set; }
+        /// <summary>
+        /// Optional
+        /// </summary>
+        public Func<IServiceProvider, IAuthCodeGenerator> AuthCodeGeneratorFactory { get; set; }
+        /// <summary>
+        /// Optional
+        /// </summary>
+        public Func<IServiceProvider, IAuthCodeStore> AuthCodeStoreFactory { get; set; }
+        /// <summary>
+        /// Optional
+        /// </summary>
+        public Func<IServiceProvider, IPkceValidator> PkceValidatorFactory { get; set; }
+
     }
 }

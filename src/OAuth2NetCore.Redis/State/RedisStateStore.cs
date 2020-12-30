@@ -14,7 +14,7 @@ namespace OAuth2NetCore.Redis.State
             _prefix = prefix;
         }
 
-        public async Task AddAsync(string key, string value, int expireSeconds)
+        public async Task SaveAsync(string key, string value, int expireSeconds)
         {
             if (expireSeconds > 0)
             {

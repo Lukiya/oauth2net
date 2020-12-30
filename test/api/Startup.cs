@@ -22,17 +22,13 @@ namespace api
 
         public void ConfigureServices(IServiceCollection services)
         {
-            var certPath = Configuration.GetValue<string>("CertPath");
-
             services.AddControllers();
 
-            services.AddSingleton<SecurityKey>(sp => new X509SecurityKey(new X509Certificate2(certPath)));
-
-            services.AddOAuth2Resource((sp, o) =>
+            services.AddOAuth2Resource(o =>
             {
-                o.IssuerSigningKey = sp.GetService<SecurityKey>();
-                o.ValidAudience = "testapi";
-                o.ValidIssuer = "https://p.test.com";
+                o.IssuerSigningKey = new X509SecurityKey(new X509Certificate2(Configuration.GetValue<string>("CertPath")));
+                o.ValidAudience = Configuration.GetValue<string>("OAuth2:ValidAudience");
+                o.ValidIssuer = Configuration.GetValue<string>("OAuth2:ValidIssuer");
             });
 
             services.AddSimpleInjector(_container, options =>

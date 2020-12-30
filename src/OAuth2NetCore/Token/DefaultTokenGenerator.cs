@@ -15,9 +15,9 @@ namespace OAuth2NetCore.Token
         public AuthServerOptions AuthServerOptions { get; }
 
         private readonly ISecurityKeyProvider _securityKeyProvider;
-        private readonly ITokenClaimGenerator _claimGenerator;
+        private readonly ITokenClaimBuilder _claimGenerator;
 
-        public DefaultTokenGenerator(ISecurityKeyProvider certProvider, ITokenClaimGenerator claimGenerator, AuthServerOptions options)
+        public DefaultTokenGenerator(ISecurityKeyProvider certProvider, ITokenClaimBuilder claimGenerator, AuthServerOptions options)
         {
             AuthServerOptions = options;
             _securityKeyProvider = certProvider;

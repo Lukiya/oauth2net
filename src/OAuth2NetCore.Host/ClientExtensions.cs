@@ -4,8 +4,8 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.IdentityModel.JsonWebTokens;
 using OAuth2NetCore;
+using OAuth2NetCore.Security;
 using System;
-using System.Collections.Generic;
 using System.Net.Http;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -16,11 +16,9 @@ namespace Microsoft.Extensions.DependencyInjection
     public static class ClientExtensions
     {
         private static readonly HttpClient _httpClient = new HttpClient();  // This won't honor DNS changes. TODO: use IHttpClientFactory.CreateClient
-        public static IServiceCollection AddOAuth2Client(this IServiceCollection services, ClientOptions options, Action<IServiceProvider, ClientOptions> configOptions)
+        public static IServiceCollection AddOAuth2Client(this IServiceCollection services, ClientOptions options, Action<ClientOptions> configOptions)
         {
-            var sp = services.BuildServiceProvider();
-            //var options = new ClientOptions();
-            configOptions(sp, options);
+            configOptions(options);
             CheckOptions(services, options);
 
             services.AddSingleton(options);
@@ -31,28 +29,35 @@ namespace Microsoft.Extensions.DependencyInjection
                 authOptions.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                 authOptions.DefaultChallengeScheme = OAuthDefaults.DisplayName;
             })
-                .AddCookie(cookieOptions =>
+                .AddCookie(o =>
                 {
+                    o.Events.OnSigningIn = context =>
+                    {
+                        //context.Properties.IsPersistent = true;
+                        //context.Properties.ExpiresUtc = DateTimeOffset.UtcNow.AddDays(14);
+                        var expStr = context.Properties.GetTokenValue(OAuth2Consts.Form_AccessToken);
+                        return Task.CompletedTask;
+                    };
                     if (options.AutoRefreshToken)
                     {
-                        cookieOptions.Events.OnValidatePrincipal = x => ValidatePrincipal(x, options);
+                        o.Events.OnValidatePrincipal = x => ValidatePrincipal(x, options);
                     }
                 })
-                .AddOAuth(OAuthDefaults.DisplayName, oauthOptions =>
+                .AddOAuth(OAuthDefaults.DisplayName, o =>
                 {
                     foreach (var scope in options.Scopes)
                     {
-                        oauthOptions.Scope.Add(scope);
+                        o.Scope.Add(scope);
                     }
-                    oauthOptions.ClientId = options.ClientID;
-                    oauthOptions.ClientSecret = options.ClientSecret;
-                    oauthOptions.AuthorizationEndpoint = options.AuthorizationEndpoint;
-                    oauthOptions.TokenEndpoint = options.TokenEndpoint;
-                    oauthOptions.CallbackPath = options.SignInCallbackPath;
-                    oauthOptions.SaveTokens = options.SaveTokens;
-                    oauthOptions.UsePkce = options.UsePkce;
+                    o.ClientId = options.ClientID;
+                    o.ClientSecret = options.ClientSecret;
+                    o.AuthorizationEndpoint = options.AuthorizationEndpoint;
+                    o.TokenEndpoint = options.TokenEndpoint;
+                    o.CallbackPath = options.SignInCallbackPath;
+                    o.SaveTokens = options.SaveTokens;
+                    o.UsePkce = options.UsePkce;
 
-                    oauthOptions.Events.OnCreatingTicket = context =>
+                    o.Events.OnCreatingTicket = context =>
                     {
                         var token = new JsonWebToken(context.AccessToken);
                         context.Principal = new ClaimsPrincipal(new ClaimsIdentity(OAuthDefaults.DisplayName, OAuth2Consts.Claim_Name, OAuth2Consts.Claim_Role));
@@ -111,10 +116,7 @@ namespace Microsoft.Extensions.DependencyInjection
         private static void CheckOptions(IServiceCollection services, ClientOptions options)
         {
             if (options.IdentityClaimsBuilder == null)
-            {
-                options.IdentityClaimsBuilder = BuildIdentityClaims;
-            }
-
+                throw new ArgumentNullException($"{nameof(options)}.{nameof(options.IdentityClaimsBuilder)}");
             if (string.IsNullOrWhiteSpace(options.ClientID))
                 throw new ArgumentNullException($"{nameof(options)}.{nameof(options.ClientID)}");
             if (string.IsNullOrWhiteSpace(options.ClientSecret))
@@ -131,27 +133,22 @@ namespace Microsoft.Extensions.DependencyInjection
                 throw new ArgumentNullException($"{nameof(options)}.{nameof(options.SignOutPath)}");
 
             // StateStore
-            if (options.StateStore != null)
-                services.AddSingleton(_ => options.StateStore);
+            if (options.StateStoreFactory != null)
+                services.AddSingleton(options.StateStoreFactory);
             else
-                throw new ArgumentNullException($"{nameof(options)}.{nameof(options.StateStore)}");
+                throw new ArgumentNullException($"{nameof(options)}.{nameof(options.StateStoreFactory)}");
 
-            if (options.ClientServer != null)
-                services.AddSingleton(_ => options.ClientServer);
+            if (options.StateGeneratorFactory != null)
+                services.AddSingleton(options.StateGeneratorFactory);
+            else
+                // use default
+                services.AddSingleton<IStateGenerator, DefaultStateGenerator>();
+
+            if (options.ClientServerFactory != null)
+                services.AddSingleton(options.ClientServerFactory);
             else
                 // use default
                 services.AddSingleton<IClientServer, DefaultClientServer>();
-        }
-
-        private static IEnumerable<Claim> BuildIdentityClaims(JsonWebToken token)
-        {
-            foreach (var claim in token.Claims)
-            {
-                if (claim.Type == OAuth2Consts.Claim_Name || claim.Type == OAuth2Consts.Claim_Role)
-                {
-                    yield return claim;
-                }
-            }
         }
     }
 }

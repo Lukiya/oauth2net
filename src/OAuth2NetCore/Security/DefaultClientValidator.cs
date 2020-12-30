@@ -29,6 +29,7 @@ namespace OAuth2NetCore.Security
             var mr = ExractClientCredentialsFromHeader(context);
             if (mr.IsSuccess) return mr;
 
+            // didn't find client credential in header, find it in request body instead
             mr = ExractClientCredentialsFromBody(context);
             return mr;
         }
@@ -46,7 +47,7 @@ namespace OAuth2NetCore.Security
             {
                 mr.MsgCode = OAuth2Consts.Err_invalid_request;
                 mr.MsgCodeDescription = "no authorization header";
-                _logger.LogWarning(mr.MsgCodeDescription);
+                //_logger.LogWarning(mr.MsgCodeDescription);    // ignore log, because credential may sent in request body, see 'ExractClientCredentials' method
                 return mr;
             }
 

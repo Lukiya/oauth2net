@@ -6,8 +6,8 @@ namespace Microsoft.Extensions.DependencyInjection
     {
         public string NameClaimType { get; set; } = "name";
         public string RoleClaimType { get; set; } = "role";
-        public SecurityKey IssuerSigningKey { get; set; }
         public string ValidIssuer { get; set; }
         public string ValidAudience { get; set; }
+        public SecurityKey IssuerSigningKey { get; set; }
     }
 }

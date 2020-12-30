@@ -70,6 +70,8 @@ namespace OAuth2NetCore
             var scopesStr = context.Request.Query[OAuth2Consts.Form_Scope].FirstOrDefault();
             var state = context.Request.Query[OAuth2Consts.Form_State].FirstOrDefault();
 
+            //GetSurferID(context);
+
             // verify client
             var clientVerifyResult = await _clientValidator.VerifyClientAsync(
                   clientID: clientID
@@ -107,6 +109,21 @@ namespace OAuth2NetCore
             }
         }
 
+        //private string GetSurferID(HttpContext context)
+        //{
+        //    var surferID = context.Request.Cookies[OAuth2Consts.Cookie_Surfer];
+        //    if (string.IsNullOrWhiteSpace(surferID))
+        //    {
+        //        surferID = Guid.NewGuid().ToString("n");
+        //        // issue a permenant cookie
+        //        context.Response.Cookies.Append(OAuth2Consts.Cookie_Surfer, surferID, new CookieOptions
+        //        {
+        //            Expires = DateTimeOffset.UtcNow.AddYears(100)
+        //        });
+        //    }
+        //    return surferID;
+        //}
+
         /// <summary>
         /// handle authorization code request
         /// </summary>
@@ -114,8 +131,7 @@ namespace OAuth2NetCore
         {
             string code;
             // pkce check
-            var pkceRequired = _configuration.GetValue<bool>(OAuth2Consts.Config_OAuth_PkceRequired);
-            if (!pkceRequired)
+            if (!AuthServerOptions.PKCERequired)
             {
                 // pkce not required, just issue code
                 code = await _authCodeGenerator.GenerateAsync().ConfigureAwait(false);
@@ -314,8 +330,7 @@ namespace OAuth2NetCore
             }
 
             // pkce check
-            var pkceRequired = _configuration.GetValue<bool>(OAuth2Consts.Config_OAuth_PkceRequired);
-            if (!pkceRequired)
+            if (!AuthServerOptions.PKCERequired)
             {
                 // issue token
                 await IssueTokenByRequestInfoAsync(context, GrantType.AuthorizationCode, client, tokenRequestInfo).ConfigureAwait(false);
@@ -379,6 +394,7 @@ namespace OAuth2NetCore
                 return;
             }
 
+            //var surferID = GetSurferID(context);
             var tokenRequestInfo = await _tokenStore.GetTokenRequestInfoAsync(refreshToken).ConfigureAwait(false);
             if (null == tokenRequestInfo)
             {
@@ -414,6 +430,7 @@ namespace OAuth2NetCore
 
             if (client.Grants.Contains(OAuth2Consts.GrantType_RefreshToken))
             {// allowed to use refresh token
+                //var surferID = GetSurferID(context);
                 var refreshToken = await _tokenGenerator.GenerateRefreshTokenAsync().ConfigureAwait(false);
                 await _tokenStore.SaveRefreshTokenAsync(refreshToken, tokenRequestInfo, client.RefreshTokenExpireSeconds).ConfigureAwait(false);
                 await WriteTokenAsync(context.Response, token, tokenRequestInfo.Scopes, client.AccessTokenExpireSeconds, refreshToken).ConfigureAwait(false);

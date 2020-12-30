@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace OAuth2NetCore.Token
 {
-    public interface ITokenClaimGenerator
+    public interface ITokenClaimBuilder
     {
         Task<IList<Claim>> GenerateAsync(HttpContext context, GrantType grantType, IClient client, string[] scopes, string username);
     }
