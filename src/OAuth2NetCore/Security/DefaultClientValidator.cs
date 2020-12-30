@@ -283,7 +283,7 @@ namespace OAuth2NetCore.Security
             else if (!client.RedirectUris.Contains(redirectURI))
             {
                 mr.MsgCode = OAuth2Consts.Err_access_denied;
-                mr.MsgCodeDescription = $"'{redirectURI}' is allowed for '{client.ID}'";
+                mr.MsgCodeDescription = $"'{redirectURI}' is not allowed for '{client.ID}'";
                 _logger.LogWarning(mr.MsgCodeDescription);
             }
         }

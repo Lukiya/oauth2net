@@ -246,9 +246,9 @@ namespace OAuth2NetCore
         /// </summary>
         protected virtual async Task HandleEndSessionRequestAsync(HttpContext context)
         {
-            var clientID = context.Request.Form[OAuth2Consts.Form_ClientID].FirstOrDefault();
-            var redirectURI = context.Request.Form[OAuth2Consts.Form_RedirectUri].FirstOrDefault();
-            var state = context.Request.Form[OAuth2Consts.Form_State].FirstOrDefault();
+            var clientID = context.Request.Query[OAuth2Consts.Form_ClientID].FirstOrDefault();
+            var redirectURI = context.Request.Query[OAuth2Consts.Form_RedirectUri].FirstOrDefault();
+            var state = context.Request.Query[OAuth2Consts.Form_State].FirstOrDefault();
 
             var mr = await _clientValidator.VerifyClientAsync(clientID, redirectURI);
             if (!mr.IsSuccess)

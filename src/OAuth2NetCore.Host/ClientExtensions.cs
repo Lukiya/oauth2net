@@ -9,17 +9,21 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using ClientOptions = OAuth2NetCore.ClientOptions;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
     public static class ClientExtensions
     {
-        public static IServiceCollection AddOAuth2Client(this IServiceCollection services, Action<IServiceProvider, ClientOptions> configOptions)
+        private static readonly HttpClient _httpClient = new HttpClient();  // This won't honor DNS changes. TODO: use IHttpClientFactory.CreateClient
+        public static IServiceCollection AddOAuth2Client(this IServiceCollection services, ClientOptions options, Action<IServiceProvider, ClientOptions> configOptions)
         {
             var sp = services.BuildServiceProvider();
-            var options = new ClientOptions();
+            //var options = new ClientOptions();
             configOptions(sp, options);
-            CheckOptions(options);
+            CheckOptions(services, options);
+
+            services.AddSingleton(options);
 
             services.AddAuthentication(authOptions =>
             {
@@ -44,7 +48,7 @@ namespace Microsoft.Extensions.DependencyInjection
                     oauthOptions.ClientSecret = options.ClientSecret;
                     oauthOptions.AuthorizationEndpoint = options.AuthorizationEndpoint;
                     oauthOptions.TokenEndpoint = options.TokenEndpoint;
-                    oauthOptions.CallbackPath = options.CallbackPath;
+                    oauthOptions.CallbackPath = options.SignInCallbackPath;
                     oauthOptions.SaveTokens = options.SaveTokens;
                     oauthOptions.UsePkce = options.UsePkce;
 
@@ -79,7 +83,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 {// refresh token exists
 
                     // send refresh token request
-                    var refreshTokenResp = await new HttpClient().RequestRefreshTokenAsync(new RefreshTokenRequest
+                    var refreshTokenResp = await _httpClient.RequestRefreshTokenAsync(new RefreshTokenRequest
                     {
                         Address = options.TokenEndpoint,
                         ClientId = options.ClientID,
@@ -104,7 +108,7 @@ namespace Microsoft.Extensions.DependencyInjection
             }
         }
 
-        private static void CheckOptions(ClientOptions options)
+        private static void CheckOptions(IServiceCollection services, ClientOptions options)
         {
             if (options.IdentityClaimsBuilder == null)
             {
@@ -119,8 +123,24 @@ namespace Microsoft.Extensions.DependencyInjection
                 throw new ArgumentNullException($"{nameof(options)}.{nameof(options.AuthorizationEndpoint)}");
             if (string.IsNullOrWhiteSpace(options.TokenEndpoint))
                 throw new ArgumentNullException($"{nameof(options)}.{nameof(options.TokenEndpoint)}");
-            if (string.IsNullOrWhiteSpace(options.CallbackPath))
-                throw new ArgumentNullException($"{nameof(options)}.{nameof(options.CallbackPath)}");
+            if (string.IsNullOrWhiteSpace(options.SignInCallbackPath))
+                throw new ArgumentNullException($"{nameof(options)}.{nameof(options.SignInCallbackPath)}");
+            if (string.IsNullOrWhiteSpace(options.SignOutCallbackPath))
+                throw new ArgumentNullException($"{nameof(options)}.{nameof(options.SignOutCallbackPath)}");
+            if (string.IsNullOrWhiteSpace(options.SignOutPath))
+                throw new ArgumentNullException($"{nameof(options)}.{nameof(options.SignOutPath)}");
+
+            // StateStore
+            if (options.StateStore != null)
+                services.AddSingleton(_ => options.StateStore);
+            else
+                throw new ArgumentNullException($"{nameof(options)}.{nameof(options.StateStore)}");
+
+            if (options.ClientServer != null)
+                services.AddSingleton(_ => options.ClientServer);
+            else
+                // use default
+                services.AddSingleton<IClientServer, DefaultClientServer>();
         }
 
         private static IEnumerable<Claim> BuildIdentityClaims(JsonWebToken token)

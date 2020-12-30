@@ -16,6 +16,7 @@
         public const string Form_ClientID = "client_id";
         public const string Form_ClientSecret = "client_secret";
         public const string Form_RedirectUri = "redirect_uri";
+        public const string Form_ReturnUrl = "returnUrl";
         public const string Form_State = "state";
         public const string Form_Scope = "scope";
         public const string Form_Code = "code";
