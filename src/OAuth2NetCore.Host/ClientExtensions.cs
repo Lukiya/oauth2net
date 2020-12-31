@@ -78,7 +78,6 @@ namespace Microsoft.Extensions.DependencyInjection
         private static async Task ValidatePrincipal(CookieValidatePrincipalContext context, ClientOptions options)
         {
             var expStr = context.Properties.GetTokenValue(OAuth2Consts.Token_ExpiresAt);
-            var now = DateTimeOffset.UtcNow;
             if (!DateTimeOffset.TryParse(expStr, out var exp))
             {// expStr format invalid
                 // reject principal
@@ -88,7 +87,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 return;
             }
 
-            if (now > exp)
+            if (DateTimeOffset.UtcNow > exp)
             {// access token expired
                 var refreshToken = context.Properties.GetTokenValue(OAuth2Consts.Token_Refresh);
                 if (!string.IsNullOrWhiteSpace(refreshToken))
