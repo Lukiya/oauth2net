@@ -35,7 +35,7 @@ namespace Microsoft.Extensions.DependencyInjection
                     {
                         //context.Properties.IsPersistent = true;
                         //context.Properties.ExpiresUtc = DateTimeOffset.UtcNow.AddDays(14);
-                        var expStr = context.Properties.GetTokenValue(OAuth2Consts.Form_AccessToken);
+                        var expStr = context.Properties.GetTokenValue(OAuth2Consts.Form_RefreshToken);
                         return Task.CompletedTask;
                     };
                     if (options.AutoRefreshToken)

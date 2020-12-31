@@ -19,28 +19,29 @@ namespace OAuth2NetCore.Redis.Token
             _secertEncryptor = secretEncryptor ?? new DefaultSecretEncryptor();
         }
 
-        public async Task SaveRefreshTokenAsync(string refreshToken, TokenRequestInfo requestInfo, int expireSeconds)
+        public async Task SaveRefreshTokenAsync(string refreshToken, TokenInfo requestInfo, int expireSeconds)
         {
             var json = JsonSerializer.Serialize(requestInfo);
             json = _secertEncryptor.Encrypt(json);
             await Database.StringSetAsync(_prefix + refreshToken, json, expiry: TimeSpan.FromSeconds(expireSeconds)).ConfigureAwait(false);
+
         }
 
-        public async Task<TokenRequestInfo> GetTokenRequestInfoAsync(string refreshToken)
+        public async Task<TokenInfo> GetTokenInfoAsync(string refreshToken)
         {
             var json = await Database.StringGetAsync(_prefix + refreshToken).ConfigureAwait(false);
             if (!string.IsNullOrWhiteSpace(json))
             {
-                _secertEncryptor.TryDecrypt(json, out var decryptedJson);
-                json = decryptedJson;
-                var r = JsonSerializer.Deserialize<TokenRequestInfo>(json);
-                await Database.KeyDeleteAsync(_prefix + refreshToken).ConfigureAwait(false);    // remove refresh token after using
-                return r;
+                if (_secertEncryptor.TryDecrypt(json, out var decryptedJson))
+                {
+                    json = decryptedJson;
+                    var r = JsonSerializer.Deserialize<TokenInfo>(json);
+                    await Database.KeyDeleteAsync(_prefix + refreshToken).ConfigureAwait(false);    // remove refresh token after using
+                    return r;
+                }
             }
-            else
-            {
-                return null;
-            }
+
+            return null;
         }
     }
 }

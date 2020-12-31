@@ -136,12 +136,12 @@ namespace OAuth2NetCore
                 // pkce not required, just issue code
                 code = await _authCodeGenerator.GenerateAsync().ConfigureAwait(false);
                 await _authCodeStore.SaveAsync(code,
-                    new TokenRequestInfo
+                    new TokenInfo
                     {
                         ClientID = client.ID,
                         Scopes = scopesStr,
                         RedirectUri = redirectURI,
-                        Username = context.User.Identity.Name,
+                        UN = context.User.Identity.Name,
                     }
                 ).ConfigureAwait(false);
 
@@ -171,14 +171,14 @@ namespace OAuth2NetCore
             // issue code with chanllenge
             code = await _authCodeGenerator.GenerateAsync().ConfigureAwait(false);
             await _authCodeStore.SaveAsync(code,
-                new TokenRequestInfo
+                new TokenInfo
                 {
                     ClientID = client.ID,
                     Scopes = scopesStr,
                     RedirectUri = redirectURI,
-                    Username = context.User.Identity.Name,
-                    CodeChanllenge = codeChanllenge,
-                    CodeChanllengeMethod = codeChanllengeMethod,
+                    UN = context.User.Identity.Name,
+                    cc = codeChanllenge,
+                    ccm = codeChanllengeMethod,
                 }
             ).ConfigureAwait(false);
 
@@ -346,7 +346,7 @@ namespace OAuth2NetCore
                 return;
             }
 
-            if (!_pkceValidator.Verify(codeVierifier, tokenRequestInfo.CodeChanllenge, tokenRequestInfo.CodeChanllengeMethod))
+            if (!_pkceValidator.Verify(codeVierifier, tokenRequestInfo.cc, tokenRequestInfo.ccm))
             {
                 var errDetail = "code verifier is invalid";
                 await ErrorHandler(context.Response, HttpStatusCode.BadRequest, OAuth2Consts.Err_invalid_grant, errDetail);
@@ -368,11 +368,11 @@ namespace OAuth2NetCore
             var success = await _resourceOwnerValidator.VerifyAsync(username, password).ConfigureAwait(false);
             if (success)
             {// pass, issue token
-                await IssueTokenByRequestInfoAsync(context, GrantType.ResourceOwner, client, new TokenRequestInfo
+                await IssueTokenByRequestInfoAsync(context, GrantType.ResourceOwner, client, new TokenInfo
                 {
                     ClientID = client.ID,
                     Scopes = scopesStr,
-                    Username = username,
+                    UN = username,
                 }).ConfigureAwait(false);
             }
             else
@@ -395,7 +395,7 @@ namespace OAuth2NetCore
             }
 
             //var surferID = GetSurferID(context);
-            var tokenRequestInfo = await _tokenStore.GetTokenRequestInfoAsync(refreshToken).ConfigureAwait(false);
+            var tokenRequestInfo = await _tokenStore.GetTokenInfoAsync(refreshToken).ConfigureAwait(false);
             if (null == tokenRequestInfo)
             {
                 var errDetail = "refresh token is invalid or expired or revoked";
@@ -417,7 +417,7 @@ namespace OAuth2NetCore
         /// <summary>
         /// issue access token and refresh token
         /// </summary>
-        protected virtual async Task IssueTokenByRequestInfoAsync(HttpContext context, GrantType grantType, IClient client, TokenRequestInfo tokenRequestInfo)
+        protected virtual async Task IssueTokenByRequestInfoAsync(HttpContext context, GrantType grantType, IClient client, TokenInfo tokenRequestInfo)
         {
             // issue token
             var token = await _tokenGenerator.GenerateAccessTokenAsync(
@@ -425,7 +425,7 @@ namespace OAuth2NetCore
                  , grantType: grantType
                  , client: client
                  , scopes: tokenRequestInfo.Scopes.Split(OAuth2Consts.Seperator_Scope)
-                 , username: tokenRequestInfo.Username
+                 , username: tokenRequestInfo.UN
              ).ConfigureAwait(false);
 
             if (client.Grants.Contains(OAuth2Consts.GrantType_RefreshToken))
@@ -451,7 +451,7 @@ namespace OAuth2NetCore
             response.Headers.Add(OAuth2Consts.Header_CacheControl, OAuth2Consts.Header_CacheControl_Value);
             response.Headers.Add(OAuth2Consts.Header_Pragma, OAuth2Consts.Header_Pragma_Value);
 
-            if (null == refreshToken)
+            if (string.IsNullOrWhiteSpace(refreshToken))
             {
                 await response.WriteAsync(GenereateTokenJson(token, scopes, expireSeconds)).ConfigureAwait(false);
             }
