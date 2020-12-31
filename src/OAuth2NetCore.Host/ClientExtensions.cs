@@ -31,13 +31,13 @@ namespace Microsoft.Extensions.DependencyInjection
             })
                 .AddCookie(o =>
                 {
-                    o.Events.OnSigningIn = context =>
-                    {
-                        //context.Properties.IsPersistent = true;
-                        //context.Properties.ExpiresUtc = DateTimeOffset.UtcNow.AddDays(14);
-                        var expStr = context.Properties.GetTokenValue(OAuth2Consts.Form_RefreshToken);
-                        return Task.CompletedTask;
-                    };
+                    //o.Events.OnSigningIn = context =>
+                    //{
+                    //    //context.Properties.IsPersistent = true;
+                    //    //context.Properties.ExpiresUtc = DateTimeOffset.UtcNow.AddDays(14);
+                    //    var expStr = context.Properties.GetTokenValue(OAuth2Consts.Form_RefreshToken);
+                    //    return Task.CompletedTask;
+                    //};
                     if (options.AutoRefreshToken)
                     {
                         o.Events.OnValidatePrincipal = x => ValidatePrincipal(x, options);
@@ -78,11 +78,18 @@ namespace Microsoft.Extensions.DependencyInjection
         private static async Task ValidatePrincipal(CookieValidatePrincipalContext context, ClientOptions options)
         {
             var expStr = context.Properties.GetTokenValue(OAuth2Consts.Token_ExpiresAt);
-            var now = DateTime.Now;
-            var exp = DateTime.Parse(expStr);
+            var now = DateTimeOffset.UtcNow;
+            if (!DateTimeOffset.TryParse(expStr, out var exp))
+            {// expStr format invalid
+                // reject principal
+                context.RejectPrincipal();
+                // sign user out
+                await context.HttpContext.SignOutAsync().ConfigureAwait(false);
+                return;
+            }
 
             if (now > exp)
-            {// expired
+            {// access token expired
                 var refreshToken = context.Properties.GetTokenValue(OAuth2Consts.Token_Refresh);
                 if (!string.IsNullOrWhiteSpace(refreshToken))
                 {// refresh token exists
@@ -98,10 +105,10 @@ namespace Microsoft.Extensions.DependencyInjection
                     });
 
                     if (!refreshTokenResp.IsError)
-                    {// refresh no error
+                    {// refresh success
                         context.Properties.UpdateTokenValue(OAuth2Consts.Token_Access, refreshTokenResp.AccessToken);
                         context.Properties.UpdateTokenValue(OAuth2Consts.Token_Refresh, refreshTokenResp.RefreshToken);
-                        var expireAt = DateTime.UtcNow.AddSeconds(refreshTokenResp.ExpiresIn).ToString(OAuth2Consts.UtcTimesamp);
+                        var expireAt = DateTimeOffset.UtcNow.AddSeconds(refreshTokenResp.ExpiresIn).ToString(OAuth2Consts.UtcTimesamp);
                         context.Properties.UpdateTokenValue(OAuth2Consts.Token_ExpiresAt, expireAt);
                         context.ShouldRenew = true;
                         return;
@@ -110,6 +117,8 @@ namespace Microsoft.Extensions.DependencyInjection
 
                 // reject principal
                 context.RejectPrincipal();
+                // sign user out
+                await context.HttpContext.SignOutAsync().ConfigureAwait(false);
             }
         }
 
