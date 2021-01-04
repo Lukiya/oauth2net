@@ -9,6 +9,7 @@ namespace OAuth2NetCore.Model
         public int AccessTokenExpireSeconds { get; set; } = 3600;
         public int RefreshTokenExpireSeconds { get; set; } = 3600 * 2;
         public IList<string> Grants { get; set; }
+        public IList<string> Audiences { get; set; }
         public IList<string> Scopes { get; set; }
         public IList<string> RedirectUris { get; set; }
     }

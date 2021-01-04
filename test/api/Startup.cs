@@ -26,7 +26,8 @@ namespace api
 
             services.AddOAuth2Resource(o =>
             {
-                o.IssuerSigningKey = new X509SecurityKey(new X509Certificate2(Configuration.GetValue<string>("CertPath")));
+                var cert = new X509Certificate2(Configuration.GetValue<string>("CertPath"));
+                o.IssuerSigningKey = new RsaSecurityKey(cert.GetRSAPublicKey());
                 o.ValidAudience = Configuration.GetValue<string>("OAuth2:ValidAudience");
                 o.ValidIssuer = Configuration.GetValue<string>("OAuth2:ValidIssuer");
             });

@@ -34,7 +34,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "auth", "test\auth\auth.cspr
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "client", "test\client\client.csproj", "{ED625E7E-055C-48CB-86D7-75BDF931C96F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "shared", "test\shared\shared.csproj", "{A779D300-56BC-49E2-8DB8-B1D0EFC64A51}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "shared", "test\shared\shared.csproj", "{A779D300-56BC-49E2-8DB8-B1D0EFC64A51}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

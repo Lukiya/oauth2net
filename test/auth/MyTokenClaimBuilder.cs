@@ -22,7 +22,15 @@ namespace auth
             // add audiences, this example just use client requested scopes as audiences
             foreach (var scope in scopes)
             {
-                claims.Add(new Claim(OAuth2Consts.Claim_Audience, scope));
+                claims.Add(new Claim("scope", scope));
+            }
+
+            if (client.Audiences != null)
+            {
+                foreach (var aud in client.Audiences)
+                {
+                    claims.Add(new Claim(OAuth2Consts.Claim_Audience, aud));
+                }
             }
 
             if (grantType == GrantType.ClientCredentials)
