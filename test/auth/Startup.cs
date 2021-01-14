@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using OAuth2NetCore;
 using OAuth2NetCore.Redis.Client;
+using OAuth2NetCore.Redis.State;
 using OAuth2NetCore.Redis.Token;
 using OAuth2NetCore.Security;
 using shared;
@@ -43,7 +44,8 @@ namespace auth
             {
                 options.TokenStoreFactory = _ => new RedisTokenStore(rediConnStr, secretEncryptor: new X509SecretEncryptor(cert));
                 options.SecurityKeyProviderFactory = _ => new X509SecurityKeyProvider(cert);
-                options.ClientStoreFactory = _ => new RedisClientStore(rediConnStr, "test:Clients", secretEncryptor: new X509SecretEncryptor(cert));
+                options.StateStoreFactory = _ => new RedisStateStore(rediConnStr, prefix: "tst:");
+                options.ClientStoreFactory = _ => new RedisClientStore(rediConnStr, "test:CLIENTS", secretEncryptor: new X509SecretEncryptor(cert));
                 options.TokenClaimBuilderFactory = _ => new MyTokenClaimBuilder();
                 options.ResourceOwnerValidatorFactory = sp =>
                 {

@@ -36,6 +36,10 @@ namespace OAuth2NetCore
         /// Required
         /// </summary>
         public Func<IServiceProvider, ITokenStore> TokenStoreFactory { get; set; }
+        /// <summary>
+        /// Required
+        /// </summary>
+        public Func<IServiceProvider, IStateStore> StateStoreFactory { get; set; }
 
         /// <summary>
         /// Optional

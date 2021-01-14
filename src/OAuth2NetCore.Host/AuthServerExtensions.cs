@@ -99,6 +99,13 @@ namespace Microsoft.Extensions.DependencyInjection
             else
                 // no default, must provde
                 throw new ArgumentNullException($"{nameof(options)}.{nameof(options.TokenStoreFactory)}");
+
+            // TokenStore
+            if (options.StateStoreFactory != null)
+                services.AddSingleton(options.StateStoreFactory);
+            else
+                // no default, must provde
+                throw new ArgumentNullException($"{nameof(options)}.{nameof(options.StateStoreFactory)}");
         }
     }
 }
