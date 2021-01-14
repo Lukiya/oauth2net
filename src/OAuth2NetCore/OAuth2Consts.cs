@@ -20,6 +20,7 @@
         public const string Form_State = "state";
         public const string Form_Scope = "scope";
         public const string Form_Code = "code";
+        public const string Form_EndSessionID = "es_id";
         public const string Form_Username = "username";
         public const string Form_Password = "password";
         public const string Form_ResponseType = "response_type";

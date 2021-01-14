@@ -19,6 +19,7 @@ namespace OAuth2NetCore
         private readonly ITokenGenerator _tokenGenerator;
         private readonly IAuthCodeStore _authCodeStore;
         private readonly ITokenStore _tokenStore;
+        private readonly IStateStore _stateStore;
         private readonly IAuthCodeGenerator _authCodeGenerator;
         private readonly IResourceOwnerValidator _resourceOwnerValidator;
         private readonly ILogger<DefaultAuthServer> _logger;
@@ -28,6 +29,8 @@ namespace OAuth2NetCore
         public RequestDelegate TokenRequestHandler { get; }
         public RequestDelegate AuthorizeRequestHandler { get; }
         public RequestDelegate EndSessionRequestHandler { get; }
+        public RequestDelegate ClearTokenRequestHandler { get; }
+
         public AuthServerOptions AuthServerOptions { get; }
 
         public DefaultAuthServer(
@@ -35,6 +38,7 @@ namespace OAuth2NetCore
             , ITokenGenerator tokenGenerator
             , IAuthCodeStore authCodeStore
             , ITokenStore tokenStore
+            , IStateStore stateStore
             , IAuthCodeGenerator authCodeGenerator
             , IResourceOwnerValidator resourceOwnerValidator
             , ILogger<DefaultAuthServer> logger
@@ -49,6 +53,7 @@ namespace OAuth2NetCore
             _logger = logger;
             _authCodeStore = authCodeStore;
             _tokenStore = tokenStore;
+            _stateStore = stateStore;
             _authCodeGenerator = authCodeGenerator;
             _pkceValidator = pkceValidator;
             _configuration = configuration;
@@ -56,6 +61,7 @@ namespace OAuth2NetCore
             TokenRequestHandler = HandleTokenRequestAsync;
             AuthorizeRequestHandler = HandleAuthorizeRequestAsync;
             EndSessionRequestHandler = HandleEndSessionRequestAsync;
+            ClearTokenRequestHandler = HandleClearTokenRequestAsync;
             AuthServerOptions = options;
         }
 
@@ -264,7 +270,6 @@ namespace OAuth2NetCore
         {
             var clientID = context.Request.Query[OAuth2Consts.Form_ClientID].FirstOrDefault();
             var redirectURI = context.Request.Query[OAuth2Consts.Form_RedirectUri].FirstOrDefault();
-            var state = context.Request.Query[OAuth2Consts.Form_State].FirstOrDefault();
 
             var mr = await _clientValidator.VerifyClientAsync(clientID, redirectURI);
             if (!mr.IsSuccess)
@@ -273,10 +278,74 @@ namespace OAuth2NetCore
                 return;
             }
 
+            var state = context.Request.Query[OAuth2Consts.Form_State].FirstOrDefault();
+            if (string.IsNullOrWhiteSpace(state))
+            {
+                context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
+                await context.Response.WriteAsync("missing state").ConfigureAwait(false);
+                return;
+            }
+
+            var endSessionID = Guid.NewGuid().ToString("n");
+            if (!string.IsNullOrWhiteSpace(state))
+            {
+                await _stateStore.SaveAsync(clientID + ":" + endSessionID, state).ConfigureAwait(false);
+            }
+
             // sign out
             await context.SignOutAsync().ConfigureAwait(false);
 
-            context.Response.Redirect($"{redirectURI}?{OAuth2Consts.Form_State}={Uri.EscapeDataString(state)}");
+            context.Response.Redirect($"{redirectURI}?{OAuth2Consts.Form_State}={Uri.EscapeDataString(state)}&{OAuth2Consts.Form_EndSessionID}={Uri.EscapeDataString(endSessionID)}");
+        }
+
+        /// <summary>
+        /// handle clear token request
+        /// </summary>
+        protected virtual async Task HandleClearTokenRequestAsync(HttpContext context)
+        {
+            var state = context.Request.Form[OAuth2Consts.Form_State].FirstOrDefault();
+            if (string.IsNullOrWhiteSpace(state))
+            {
+                context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
+                await context.Response.WriteAsync("missing state").ConfigureAwait(false);
+                return;
+            }
+
+            var clientID = context.Request.Form[OAuth2Consts.Form_ClientID].FirstOrDefault();
+            var clientSecret = context.Request.Form[OAuth2Consts.Form_ClientSecret].FirstOrDefault();
+            var mr = await _clientValidator.VerifyClientAsync(new NetworkCredential(clientID, clientSecret));
+            if (!mr.IsSuccess)
+            {
+                await ErrorHandler(context.Response, HttpStatusCode.BadRequest, mr.MsgCode, mr.MsgCodeDescription).ConfigureAwait(false);
+                return;
+            }
+
+            var oldRefreshToken = context.Request.Form[OAuth2Consts.Form_RefreshToken].FirstOrDefault();
+            if (string.IsNullOrWhiteSpace(oldRefreshToken))
+            {
+                context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
+                await context.Response.WriteAsync("missing refresh token").ConfigureAwait(false);
+                return;
+            }
+
+            var endSessionID = context.Request.Form[OAuth2Consts.Form_EndSessionID].FirstOrDefault();
+            if (string.IsNullOrWhiteSpace(endSessionID))
+            {
+                context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
+                await context.Response.WriteAsync("missing es_id").ConfigureAwait(false);
+                return;
+            }
+
+            // verify state
+            var storedState = await _stateStore.GetThenRemoveAsync(clientID + ":" + endSessionID).ConfigureAwait(false);
+            if (storedState != state)
+            {
+                context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
+                await context.Response.WriteAsync("invalid state").ConfigureAwait(false);
+                return;
+            }
+
+            await _tokenStore.RemoveRefreshTokenAsync(oldRefreshToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -395,7 +464,7 @@ namespace OAuth2NetCore
             }
 
             //var surferID = GetSurferID(context);
-            var tokenRequestInfo = await _tokenStore.GetTokenInfoAsync(refreshToken).ConfigureAwait(false);
+            var tokenRequestInfo = await _tokenStore.GetThenRemoveTokenInfoAsync(refreshToken).ConfigureAwait(false);
             if (null == tokenRequestInfo)
             {
                 var errDetail = "refresh token is invalid or expired or revoked";

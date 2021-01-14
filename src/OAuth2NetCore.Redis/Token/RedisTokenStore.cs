@@ -27,7 +27,7 @@ namespace OAuth2NetCore.Redis.Token
 
         }
 
-        public async Task<TokenInfo> GetTokenInfoAsync(string refreshToken)
+        public async Task<TokenInfo> GetThenRemoveTokenInfoAsync(string refreshToken)
         {
             var json = await Database.StringGetAsync(_prefix + refreshToken).ConfigureAwait(false);
             if (!string.IsNullOrWhiteSpace(json))
@@ -36,12 +36,17 @@ namespace OAuth2NetCore.Redis.Token
                 {
                     json = decryptedJson;
                     var r = JsonSerializer.Deserialize<TokenInfo>(json);
-                    await Database.KeyDeleteAsync(_prefix + refreshToken).ConfigureAwait(false);    // remove refresh token after using
+                    await RemoveRefreshTokenAsync(refreshToken).ConfigureAwait(false);    // remove refresh token after using
                     return r;
                 }
             }
 
             return null;
+        }
+
+        public async Task RemoveRefreshTokenAsync(string refreshToken)
+        {
+            await Database.KeyDeleteAsync(_prefix + refreshToken).ConfigureAwait(false);
         }
     }
 }

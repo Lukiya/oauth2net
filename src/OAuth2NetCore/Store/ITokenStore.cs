@@ -6,6 +6,7 @@ namespace OAuth2NetCore.Store
     public interface ITokenStore
     {
         Task SaveRefreshTokenAsync(string refreshToken, TokenInfo requestInfo, int expireSeconds);
-        Task<TokenInfo> GetTokenInfoAsync(string refreshToken);
+        Task<TokenInfo> GetThenRemoveTokenInfoAsync(string refreshToken);
+        Task RemoveRefreshTokenAsync(string refreshToken);
     }
 }

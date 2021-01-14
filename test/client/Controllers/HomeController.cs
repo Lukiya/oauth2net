@@ -22,7 +22,7 @@ namespace client.Controllers
         {
             var token = await HttpContext.GetTokenAsync("access_token").ConfigureAwait(false);
             var client = new HttpClient();
-            var request = new HttpRequestMessage(HttpMethod.Get, new Uri("https://i.test.com/users"));
+            var request = new HttpRequestMessage(HttpMethod.Get, new Uri("https://di.test.com/users"));
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
             var resp = await client.SendAsync(request).ConfigureAwait(false);
             var rs = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);

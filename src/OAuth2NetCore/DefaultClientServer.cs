@@ -59,7 +59,7 @@ namespace OAuth2NetCore
             var state = context.Request.Query[OAuth2Consts.Form_State].FirstOrDefault();
 
             // read return url from store
-            var returnUrl = await _stateStore.RemoveAsync(state).ConfigureAwait(false);
+            var returnUrl = await _stateStore.GetThenRemoveAsync(state).ConfigureAwait(false);
             if (!string.IsNullOrWhiteSpace(returnUrl))
             {
                 // sign out & redirect to return url

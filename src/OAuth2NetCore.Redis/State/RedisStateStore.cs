@@ -26,7 +26,7 @@ namespace OAuth2NetCore.Redis.State
             }
         }
 
-        public async Task<string> RemoveAsync(string key)
+        public async Task<string> GetThenRemoveAsync(string key)
         {
             key = _prefix + key;
             var value = await Database.StringGetAsync(key).ConfigureAwait(false);
