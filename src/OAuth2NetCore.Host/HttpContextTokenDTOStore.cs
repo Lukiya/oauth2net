@@ -15,7 +15,6 @@ namespace OAuth2NetCore.Host
         private readonly ILogger<HttpContextTokenDTOStore> _logger;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ISecureDataFormat<TokenDTO> _tokenDTOProector;
-        private const string _authCookieName = "auth.cookie2";
 
         public HttpContextTokenDTOStore(IHttpContextAccessor httpContextAccessor, ISecureDataFormat<TokenDTO> tokenDTOProector, ILogger<HttpContextTokenDTOStore> logger)
         {
@@ -33,14 +32,14 @@ namespace OAuth2NetCore.Host
 
                 var cookieOptions = new CookieOptions();
 
-                var jwt = new JsonWebToken(tokenDTO.AccessToken);
+                var jwt = tokenDTO.GetJwt();
                 if (jwt.TryGetPayloadValue<long>(OAuth2Consts.Claim_RefreshTokenExpire, out var rexp))
                 {
                     cookieOptions.Expires = DateTimeOffset.FromUnixTimeSeconds(rexp);
                 }
 
-                _httpContextAccessor.HttpContext.Response.Cookies.Append(_authCookieName, _tokenDTOProector.Protect(tokenDTO), cookieOptions);
-                return Task.FromResult<JsonWebToken>(jwt);
+                _httpContextAccessor.HttpContext.Response.Cookies.Append(OAuth2Consts.Cookie_TokenDTO, _tokenDTOProector.Protect(tokenDTO), cookieOptions);
+                return Task.FromResult(jwt);
             }
             else
             {
@@ -53,9 +52,9 @@ namespace OAuth2NetCore.Host
         {
             if (_httpContextAccessor.HttpContext != null)
             {
-                var protectedText = _httpContextAccessor.HttpContext.Request.Cookies[_authCookieName];
+                var protectedText = _httpContextAccessor.HttpContext.Request.Cookies[OAuth2Consts.Cookie_TokenDTO];
                 if (string.IsNullOrWhiteSpace(protectedText))
-                    return null;
+                    return Task.FromResult<TokenDTO>(null);
 
                 var tokenDTO = _tokenDTOProector.Unprotect(protectedText);
 

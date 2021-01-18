@@ -37,7 +37,7 @@ namespace auth.Controllers
         public async Task<IActionResult> Login(LoginModel model)
         {
             // Verify username & password first
-            var isValid = await LazyUserService.Value.VerifyAsync(model.Username, model.Password).ConfigureAwait(false);
+            var isValid = await LazyUserService.Value.VerifyAsync(model.Username, model.Password);
             if (isValid)
             {
                 Logger.LogDebug("log in success");
@@ -59,7 +59,7 @@ namespace auth.Controllers
                     , OAuth2Consts.Claim_Role
                 );
                 var principal = new ClaimsPrincipal(identity);
-                await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, props).ConfigureAwait(false);
+                await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, props);
             }
             else
             {
@@ -76,7 +76,8 @@ namespace auth.Controllers
         [HttpPost]
         public async Task<ActionResult> Logout(string returnUrl)
         {
-            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme).ConfigureAwait(false);
+            //await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            await HttpContext.SignOutAsync();
             return RedirectToAction(nameof(LoggedOut));
         }
 

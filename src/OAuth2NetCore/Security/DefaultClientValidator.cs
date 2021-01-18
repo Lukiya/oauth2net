@@ -112,7 +112,7 @@ namespace OAuth2NetCore.Security
         {
             var mr = new MessageResult<IClient>();
 
-            var client = await _clientStore.GetClientAsync(credential.UserName).ConfigureAwait(false);
+            var client = await _clientStore.GetClientAsync(credential.UserName);
             if (client == null)
             {
                 mr.MsgCode = OAuth2Consts.Err_invalid_client;
@@ -148,7 +148,7 @@ namespace OAuth2NetCore.Security
                 return mr;
             }
 
-            mr = await VerifyClientAsync(credential).ConfigureAwait(false);
+            mr = await VerifyClientAsync(credential);
             if (!mr.IsSuccess) return mr;
 
             ValidateGrants(mr, mr.Result, grantType);
@@ -172,7 +172,7 @@ namespace OAuth2NetCore.Security
                 return mr;
             }
 
-            mr = await this.VerifyClientAsync(credential, grantType).ConfigureAwait(false);
+            mr = await this.VerifyClientAsync(credential, grantType);
             if (!mr.IsSuccess) return mr;
 
             ValidateScopes(mr, mr.Result, scopesStr);
@@ -216,7 +216,7 @@ namespace OAuth2NetCore.Security
                 return mr;
             }
 
-            var client = await _clientStore.GetClientAsync(clientID).ConfigureAwait(false);
+            var client = await _clientStore.GetClientAsync(clientID);
             if (null == client)
             {
                 mr.MsgCode = OAuth2Consts.Err_invalid_client;
@@ -259,7 +259,7 @@ namespace OAuth2NetCore.Security
                 return mr;
             }
 
-            var client = await _clientStore.GetClientAsync(clientID).ConfigureAwait(false);
+            var client = await _clientStore.GetClientAsync(clientID);
             if (null == client)
             {
                 mr.MsgCode = OAuth2Consts.Err_invalid_client;

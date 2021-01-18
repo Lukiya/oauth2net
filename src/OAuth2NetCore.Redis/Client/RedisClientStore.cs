@@ -33,7 +33,7 @@ namespace OAuth2NetCore.Redis.Client
 
         public async Task<IClient> GetClientAsync(string clientID)
         {
-            var json = await Database.HashGetAsync(_key, clientID).ConfigureAwait(false);
+            var json = await Database.HashGetAsync(_key, clientID);
             if (json.IsNull)
             {
                 return null;
@@ -60,7 +60,7 @@ namespace OAuth2NetCore.Redis.Client
 
         public async Task<IDictionary<string, IClient>> GetClientsAsync()
         {
-            var hashEntries = await Database.HashGetAllAsync(_key).ConfigureAwait(false);
+            var hashEntries = await Database.HashGetAllAsync(_key);
 
             var dic = hashEntries.ToDictionary(x => x.Name.ToString(), x => (IClient)JsonSerializer.Deserialize<Model.Client>(x.Value.ToString()));
 
@@ -84,7 +84,7 @@ namespace OAuth2NetCore.Redis.Client
         //}
         //public async Task<IClient> VerifyAsync(string clientID, string clientSecret)
         //{
-        //    var client = await GetClientAsync(clientID).ConfigureAwait(false);
+        //    var client = await GetClientAsync(clientID);
         //    if (client != null && client.Secret == clientSecret)
         //    {
         //        return client;

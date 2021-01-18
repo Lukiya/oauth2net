@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.AspNetCore.DataProtection;
-using Microsoft.IdentityModel.JsonWebTokens;
 using OAuth2NetCore;
 using OAuth2NetCore.Host;
 using OAuth2NetCore.Model;
@@ -64,7 +63,7 @@ namespace Microsoft.Extensions.DependencyInjection
                         o.Events.OnValidatePrincipal = x => ValidatePrincipal(x, httpClientFactory, tokenDTOStore, options);
                     }
                 })
-                .AddOAuth(OAuthDefaults.DisplayName, o =>
+                .AddOAuth<OAuthOptions, OAuth2Handler>(OAuthDefaults.DisplayName, o =>
                 {
                     foreach (var scope in options.Scopes)
                     {
@@ -83,7 +82,7 @@ namespace Microsoft.Extensions.DependencyInjection
                         context.Principal = new ClaimsPrincipal(new ClaimsIdentity(OAuthDefaults.DisplayName, OAuth2Consts.Claim_Name, OAuth2Consts.Claim_Role));
 
                         // Save token to cookie, and return a json web token
-                        var jwt = await tokenDTOStore.SaveTokenDTOAsync(context.TokenResponse.Response.ToJsonString()).ConfigureAwait(false);
+                        var jwt = await tokenDTOStore.SaveTokenDTOAsync(context.TokenResponse.Response.ToJsonString());
                         if (jwt != null)
                         {
                             var claims = options.IdentityClaimsBuilder(jwt);
@@ -98,22 +97,17 @@ namespace Microsoft.Extensions.DependencyInjection
             return services;
         }
 
-        //public static string GetTokenAsync(this HttpContext httpContext)
-        //{
-        //    return "";
-        //}
-
         private static async Task ValidatePrincipal(CookieValidatePrincipalContext context, IHttpClientFactory httpClientFactory, ITokenDTOStore tokenDTOStore, ClientOptions options)
         {
-            var tokenDTO = await tokenDTOStore.GetTokenDTOAsync().ConfigureAwait(false);
-            var jwt = new JsonWebToken(tokenDTO.AccessToken);
+            var tokenDTO = await tokenDTOStore.GetTokenDTOAsync();
+            var jwt = tokenDTO.GetJwt();
 
             //if (!jwt.TryGetPayloadValue<long>(OAuth2Consts.Claim_AccessTokenExpire, out var exp))
             //{// expStr format invalid
             //    // reject principal
             //    context.RejectPrincipal();
             //    // sign user out
-            //    await context.HttpContext.SignOutAsync().ConfigureAwait(false);
+            //    await context.HttpContext.SignOutAsync();
             //    return;
             //}
 
@@ -135,7 +129,7 @@ namespace Microsoft.Extensions.DependencyInjection
 
                     if (!refreshTokenResp.IsError)
                     {// refresh success
-                        await tokenDTOStore.SaveTokenDTOAsync(refreshTokenResp.Raw).ConfigureAwait(false);
+                        await tokenDTOStore.SaveTokenDTOAsync(refreshTokenResp.Raw);
                         //context.Properties.UpdateTokenValue(OAuth2Consts.Token_Access, refreshTokenResp.AccessToken);
                         //context.Properties.UpdateTokenValue(OAuth2Consts.Token_Refresh, refreshTokenResp.RefreshToken);
                         //var expireAt = DateTimeOffset.UtcNow.AddSeconds(refreshTokenResp.ExpiresIn).ToString(OAuth2Consts.UtcTimesamp);
@@ -148,7 +142,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 // reject principal
                 context.RejectPrincipal();
                 // sign user out
-                await context.HttpContext.SignOutAsync().ConfigureAwait(false);
+                await context.HttpContext.OAuth2SignOutAsync();
             }
         }
 

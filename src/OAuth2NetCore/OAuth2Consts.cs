@@ -62,7 +62,7 @@
         public const string Token_ExpiresAt = "expires_at";
         public const string Token_Type_Bearer = "Bearer";
         public const string UtcTimesamp = "yyyy-MM-ddTHH:mm:ss.0000000+00:00";
-        public const string Cookie_Surfer = "oatuh2.surfer";
+        public const string Cookie_TokenDTO = "atuh.cookie2";
         public const char Seperator_Scope = ' ';
         public static readonly char[] Seperators_Auth = new char[] { ':' };
 

@@ -31,7 +31,7 @@ namespace OAuth2NetCore.Token
             var handler = new JsonWebTokenHandler();
             var now = DateTime.UtcNow;
 
-            var claims = await _claimGenerator.GenerateAsync(context, grantType, client, scopes, username).ConfigureAwait(false);
+            var claims = await _claimGenerator.GenerateAsync(context, grantType, client, scopes, username);
 
             var descriptor = new SecurityTokenDescriptor
             {

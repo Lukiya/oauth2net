@@ -85,17 +85,17 @@ namespace OAuth2NetCore
                 , redirectURI: redirectURI
                 , scopesStr: scopesStr
                 , state: state
-            ).ConfigureAwait(false);
+            );
             if (!clientVerifyResult.IsSuccess)
             {
-                await ErrorHandler(context.Response, HttpStatusCode.BadRequest, clientVerifyResult.MsgCode, clientVerifyResult.MsgCodeDescription).ConfigureAwait(false);
+                await ErrorHandler(context.Response, HttpStatusCode.BadRequest, clientVerifyResult.MsgCode, clientVerifyResult.MsgCodeDescription);
                 return;
             }
 
             if (!context.User.Identity.IsAuthenticated)
             {
                 // user not login, redirect to login page
-                await context.ChallengeAsync().ConfigureAwait(false);
+                await context.ChallengeAsync();
                 return;
             }
 
@@ -103,14 +103,14 @@ namespace OAuth2NetCore
             {
                 case OAuth2Consts.ResponseType_Code:
                     // authorization code
-                    await AuthorizationCodeRequestHandler(context, clientVerifyResult.Result, scopesStr, redirectURI, state).ConfigureAwait(false);
+                    await AuthorizationCodeRequestHandler(context, clientVerifyResult.Result, scopesStr, redirectURI, state);
                     break;
                 case OAuth2Consts.ResponseType_Token:
                     // implicit
-                    await ImplicitTokenRequestHandler(context, clientVerifyResult.Result, scopesStr, redirectURI, state).ConfigureAwait(false);
+                    await ImplicitTokenRequestHandler(context, clientVerifyResult.Result, scopesStr, redirectURI, state);
                     break;
                 default:
-                    await ErrorHandler(context.Response, HttpStatusCode.BadRequest, OAuth2Consts.Err_unsupported_response_type).ConfigureAwait(false);
+                    await ErrorHandler(context.Response, HttpStatusCode.BadRequest, OAuth2Consts.Err_unsupported_response_type);
                     break;
             }
         }
@@ -140,7 +140,7 @@ namespace OAuth2NetCore
             if (!AuthServerOptions.PKCERequired)
             {
                 // pkce not required, just issue code
-                code = await _authCodeGenerator.GenerateAsync().ConfigureAwait(false);
+                code = await _authCodeGenerator.GenerateAsync();
                 await _authCodeStore.SaveAsync(code,
                     new TokenInfo
                     {
@@ -149,7 +149,7 @@ namespace OAuth2NetCore
                         RedirectUri = redirectURI,
                         UN = context.User.Identity.Name,
                     }
-                ).ConfigureAwait(false);
+                );
 
                 context.Response.Redirect($"{redirectURI}?{OAuth2Consts.Form_Code}={code}&{OAuth2Consts.Form_State}={Uri.EscapeDataString(state)}");
                 return;
@@ -159,7 +159,7 @@ namespace OAuth2NetCore
             var codeChanllenge = context.Request.Query[OAuth2Consts.Form_CodeChallenge].FirstOrDefault();
             if (string.IsNullOrWhiteSpace(codeChanllenge))
             {// client didn't provide pkce chanllenge, write error
-                await ErrorHandler(context.Response, HttpStatusCode.BadRequest, OAuth2Consts.Err_invalid_request, "code chanllenge is required.").ConfigureAwait(false);
+                await ErrorHandler(context.Response, HttpStatusCode.BadRequest, OAuth2Consts.Err_invalid_request, "code chanllenge is required.");
                 return;
             }
             // client provided pkce chanllenge
@@ -170,12 +170,12 @@ namespace OAuth2NetCore
             }
             else if (codeChanllengeMethod != OAuth2Consts.Pkce_Plain && codeChanllengeMethod != OAuth2Consts.Pkce_S256)
             {
-                await ErrorHandler(context.Response, HttpStatusCode.BadRequest, OAuth2Consts.Err_invalid_request, "transform algorithm not supported").ConfigureAwait(false);
+                await ErrorHandler(context.Response, HttpStatusCode.BadRequest, OAuth2Consts.Err_invalid_request, "transform algorithm not supported");
                 return;
             }
 
             // issue code with chanllenge
-            code = await _authCodeGenerator.GenerateAsync().ConfigureAwait(false);
+            code = await _authCodeGenerator.GenerateAsync();
             await _authCodeStore.SaveAsync(code,
                 new TokenInfo
                 {
@@ -186,7 +186,7 @@ namespace OAuth2NetCore
                     cc = codeChanllenge,
                     ccm = codeChanllengeMethod,
                 }
-            ).ConfigureAwait(false);
+            );
 
             context.Response.Redirect($"{redirectURI}?{OAuth2Consts.Form_Code}={code}&{OAuth2Consts.Form_State}={Uri.EscapeDataString(state)}&{OAuth2Consts.Form_CodeChallenge}={Uri.EscapeDataString(codeChanllenge)}&{OAuth2Consts.Form_CodeChallengeMethod}={codeChanllengeMethod}");
         }
@@ -202,7 +202,7 @@ namespace OAuth2NetCore
                 , client: client
                 , scopes: scopesStr.Split(OAuth2Consts.Seperator_Scope)
                 , username: context.User.Identity.Name
-            ).ConfigureAwait(false);
+            );
 
             context.Response.Redirect($"{redirectURI}?{OAuth2Consts.Form_AccessToken}={Uri.EscapeDataString(token)}&{OAuth2Consts.Form_TokenType}=Bearer&{OAuth2Consts.Form_ExpiresIn}={client.AccessTokenExpireSeconds}&{OAuth2Consts.Form_Scope}={Uri.EscapeDataString(scopesStr)}&{OAuth2Consts.Form_State}={Uri.EscapeDataString(state)}");
         }
@@ -219,7 +219,7 @@ namespace OAuth2NetCore
             var clientCredentialsResult = _clientValidator.ExractClientCredentials(context);
             if (!clientCredentialsResult.IsSuccess)
             {
-                await ErrorHandler(context.Response, HttpStatusCode.BadRequest, clientCredentialsResult.MsgCode, clientCredentialsResult.MsgCodeDescription).ConfigureAwait(false);
+                await ErrorHandler(context.Response, HttpStatusCode.BadRequest, clientCredentialsResult.MsgCode, clientCredentialsResult.MsgCodeDescription);
                 return;
             }
 
@@ -228,37 +228,37 @@ namespace OAuth2NetCore
             if (grantTypeStr == OAuth2Consts.GrantType_AuthorizationCode)
             {
                 // auth code grant doesn't post scopes 
-                clientVerifyResult = await _clientValidator.VerifyClientAsync(clientCredentialsResult.Result, grantTypeStr).ConfigureAwait(false);
+                clientVerifyResult = await _clientValidator.VerifyClientAsync(clientCredentialsResult.Result, grantTypeStr);
             }
             else
             {
                 // other scopes must post scopes
-                clientVerifyResult = await _clientValidator.VerifyClientAsync(clientCredentialsResult.Result, grantTypeStr, scopesStr).ConfigureAwait(false);
+                clientVerifyResult = await _clientValidator.VerifyClientAsync(clientCredentialsResult.Result, grantTypeStr, scopesStr);
             }
 
             if (!clientVerifyResult.IsSuccess)
             {
                 var httpStatusCode = clientVerifyResult.MsgCode == OAuth2Consts.Err_invalid_client ? HttpStatusCode.Unauthorized : HttpStatusCode.BadRequest;
-                await ErrorHandler(context.Response, httpStatusCode, clientVerifyResult.MsgCode, clientVerifyResult.MsgCodeDescription).ConfigureAwait(false);
+                await ErrorHandler(context.Response, httpStatusCode, clientVerifyResult.MsgCode, clientVerifyResult.MsgCodeDescription);
                 return;
             }
 
             switch (grantTypeStr)
             {
                 case OAuth2Consts.GrantType_Client:
-                    await HandleClientCredentialsTokenRequestAsync(context, clientVerifyResult.Result, scopesStr).ConfigureAwait(false);
+                    await HandleClientCredentialsTokenRequestAsync(context, clientVerifyResult.Result, scopesStr);
                     break;
                 case OAuth2Consts.GrantType_AuthorizationCode:
-                    await HandleAuthorizationCodeTokenRequestAsync(context, clientVerifyResult.Result).ConfigureAwait(false);
+                    await HandleAuthorizationCodeTokenRequestAsync(context, clientVerifyResult.Result);
                     break;
                 case OAuth2Consts.GrantType_ResourceOwner:
-                    await HandleResourceOwnerTokenRequestAsync(context, clientVerifyResult.Result, scopesStr).ConfigureAwait(false);
+                    await HandleResourceOwnerTokenRequestAsync(context, clientVerifyResult.Result, scopesStr);
                     break;
                 case OAuth2Consts.GrantType_RefreshToken:
-                    await HandleRefreshTokenRequestAsync(context, clientVerifyResult.Result).ConfigureAwait(false);
+                    await HandleRefreshTokenRequestAsync(context, clientVerifyResult.Result);
                     break;
                 default:
-                    await ErrorHandler(context.Response, HttpStatusCode.BadRequest, OAuth2Consts.Err_unsupported_grant_type).ConfigureAwait(false);
+                    await ErrorHandler(context.Response, HttpStatusCode.BadRequest, OAuth2Consts.Err_unsupported_grant_type);
                     break;
             }
         }
@@ -274,7 +274,7 @@ namespace OAuth2NetCore
             var mr = await _clientValidator.VerifyClientAsync(clientID, redirectURI);
             if (!mr.IsSuccess)
             {
-                await ErrorHandler(context.Response, HttpStatusCode.BadRequest, mr.MsgCode, mr.MsgCodeDescription).ConfigureAwait(false);
+                await ErrorHandler(context.Response, HttpStatusCode.BadRequest, mr.MsgCode, mr.MsgCodeDescription);
                 return;
             }
 
@@ -282,18 +282,18 @@ namespace OAuth2NetCore
             if (string.IsNullOrWhiteSpace(state))
             {
                 context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
-                await context.Response.WriteAsync("missing state").ConfigureAwait(false);
+                await context.Response.WriteAsync("missing state");
                 return;
             }
 
             var endSessionID = Guid.NewGuid().ToString("n");
             if (!string.IsNullOrWhiteSpace(state))
             {
-                await _stateStore.SaveAsync(clientID + ":" + endSessionID, state).ConfigureAwait(false);
+                await _stateStore.SaveAsync(clientID + ":" + endSessionID, state);
             }
 
             // sign out
-            await context.SignOutAsync().ConfigureAwait(false);
+            await context.OAuth2SignOutAsync();
 
             context.Response.Redirect($"{redirectURI}?{OAuth2Consts.Form_State}={Uri.EscapeDataString(state)}&{OAuth2Consts.Form_EndSessionID}={Uri.EscapeDataString(endSessionID)}");
         }
@@ -307,7 +307,7 @@ namespace OAuth2NetCore
             if (string.IsNullOrWhiteSpace(state))
             {
                 context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
-                await context.Response.WriteAsync("missing state").ConfigureAwait(false);
+                await context.Response.WriteAsync("missing state");
                 return;
             }
 
@@ -316,7 +316,7 @@ namespace OAuth2NetCore
             var mr = await _clientValidator.VerifyClientAsync(new NetworkCredential(clientID, clientSecret));
             if (!mr.IsSuccess)
             {
-                await ErrorHandler(context.Response, HttpStatusCode.BadRequest, mr.MsgCode, mr.MsgCodeDescription).ConfigureAwait(false);
+                await ErrorHandler(context.Response, HttpStatusCode.BadRequest, mr.MsgCode, mr.MsgCodeDescription);
                 return;
             }
 
@@ -324,7 +324,7 @@ namespace OAuth2NetCore
             if (string.IsNullOrWhiteSpace(oldRefreshToken))
             {
                 context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
-                await context.Response.WriteAsync("missing refresh token").ConfigureAwait(false);
+                await context.Response.WriteAsync("missing refresh token");
                 return;
             }
 
@@ -332,20 +332,20 @@ namespace OAuth2NetCore
             if (string.IsNullOrWhiteSpace(endSessionID))
             {
                 context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
-                await context.Response.WriteAsync("missing es_id").ConfigureAwait(false);
+                await context.Response.WriteAsync("missing es_id");
                 return;
             }
 
             // verify state
-            var storedState = await _stateStore.GetThenRemoveAsync(clientID + ":" + endSessionID).ConfigureAwait(false);
+            var storedState = await _stateStore.GetThenRemoveAsync(clientID + ":" + endSessionID);
             if (storedState != state)
             {
                 context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
-                await context.Response.WriteAsync("invalid state").ConfigureAwait(false);
+                await context.Response.WriteAsync("invalid state");
                 return;
             }
 
-            await _tokenStore.RemoveRefreshTokenAsync(oldRefreshToken).ConfigureAwait(false);
+            await _tokenStore.RemoveRefreshTokenAsync(oldRefreshToken);
         }
 
         /// <summary>
@@ -360,9 +360,9 @@ namespace OAuth2NetCore
                               , client: client
                               , scopes: scopesStr.Split(OAuth2Consts.Seperator_Scope)
                               , username: client.ID
-                          ).ConfigureAwait(false);
+                          );
 
-            await WriteTokenAsync(context.Response, token, scopesStr, client).ConfigureAwait(false);
+            await WriteTokenAsync(context.Response, token, scopesStr, client);
         }
 
         /// <summary>
@@ -376,7 +376,7 @@ namespace OAuth2NetCore
             var redirectURI = context.Request.Form[OAuth2Consts.Form_RedirectUri].FirstOrDefault();
 
 
-            var tokenRequestInfo = await _authCodeStore.GetThenRemoveAsync(code).ConfigureAwait(false);
+            var tokenRequestInfo = await _authCodeStore.GetThenRemoveAsync(code);
             if (null == tokenRequestInfo)
             {
                 var errDetail = "invalid authorization code";
@@ -402,7 +402,7 @@ namespace OAuth2NetCore
             if (!AuthServerOptions.PKCERequired)
             {
                 // issue token
-                await IssueTokenByRequestInfoAsync(context, GrantType.AuthorizationCode, client, tokenRequestInfo).ConfigureAwait(false);
+                await IssueTokenByRequestInfoAsync(context, GrantType.AuthorizationCode, client, tokenRequestInfo);
                 return;
             }
 
@@ -422,8 +422,15 @@ namespace OAuth2NetCore
                 return;
             }
 
+            // clear old refresh token
+            var oldRefreshToken = context.Request.Form[OAuth2Consts.Form_RefreshToken].FirstOrDefault();
+            if (!string.IsNullOrWhiteSpace(oldRefreshToken))
+            {
+                await _tokenStore.RemoveRefreshTokenAsync(oldRefreshToken);
+            }
+
             // issue token
-            await IssueTokenByRequestInfoAsync(context, GrantType.AuthorizationCode, client, tokenRequestInfo).ConfigureAwait(false);
+            await IssueTokenByRequestInfoAsync(context, GrantType.AuthorizationCode, client, tokenRequestInfo);
         }
 
         /// <summary>
@@ -434,7 +441,7 @@ namespace OAuth2NetCore
             // verify username & password
             var username = context.Request.Form[OAuth2Consts.Form_Username].FirstOrDefault();
             var password = context.Request.Form[OAuth2Consts.Form_Password].FirstOrDefault();
-            var success = await _resourceOwnerValidator.VerifyAsync(username, password).ConfigureAwait(false);
+            var success = await _resourceOwnerValidator.VerifyAsync(username, password);
             if (success)
             {// pass, issue token
                 await IssueTokenByRequestInfoAsync(context, GrantType.ResourceOwner, client, new TokenInfo
@@ -442,11 +449,11 @@ namespace OAuth2NetCore
                     ClientID = client.ID,
                     Scopes = scopesStr,
                     UN = username,
-                }).ConfigureAwait(false);
+                });
             }
             else
             {
-                await ErrorHandler(context.Response, HttpStatusCode.BadRequest, OAuth2Consts.Err_invalid_grant, "username password doesn't match").ConfigureAwait(false);
+                await ErrorHandler(context.Response, HttpStatusCode.BadRequest, OAuth2Consts.Err_invalid_grant, "username password doesn't match");
             }
         }
 
@@ -464,7 +471,7 @@ namespace OAuth2NetCore
             }
 
             //var surferID = GetSurferID(context);
-            var tokenRequestInfo = await _tokenStore.GetThenRemoveTokenInfoAsync(refreshToken).ConfigureAwait(false);
+            var tokenRequestInfo = await _tokenStore.GetThenRemoveTokenInfoAsync(refreshToken);
             if (null == tokenRequestInfo)
             {
                 var errDetail = "refresh token is invalid or expired or revoked";
@@ -480,7 +487,7 @@ namespace OAuth2NetCore
             }
 
             // issue token
-            await IssueTokenByRequestInfoAsync(context, GrantType.RefreshToken, client, tokenRequestInfo).ConfigureAwait(false);
+            await IssueTokenByRequestInfoAsync(context, GrantType.RefreshToken, client, tokenRequestInfo);
         }
 
         /// <summary>
@@ -495,18 +502,18 @@ namespace OAuth2NetCore
                  , client: client
                  , scopes: tokenRequestInfo.Scopes.Split(OAuth2Consts.Seperator_Scope)
                  , username: tokenRequestInfo.UN
-             ).ConfigureAwait(false);
+             );
 
             if (client.Grants.Contains(OAuth2Consts.GrantType_RefreshToken))
             {// allowed to use refresh token
                 //var surferID = GetSurferID(context);
-                var refreshToken = await _tokenGenerator.GenerateRefreshTokenAsync().ConfigureAwait(false);
-                await _tokenStore.SaveRefreshTokenAsync(refreshToken, tokenRequestInfo, client.RefreshTokenExpireSeconds).ConfigureAwait(false);
-                await WriteTokenAsync(context.Response, token, tokenRequestInfo.Scopes, client, refreshToken).ConfigureAwait(false);
+                var refreshToken = await _tokenGenerator.GenerateRefreshTokenAsync();
+                await _tokenStore.SaveRefreshTokenAsync(refreshToken, tokenRequestInfo, client.RefreshTokenExpireSeconds);
+                await WriteTokenAsync(context.Response, token, tokenRequestInfo.Scopes, client, refreshToken);
             }
             else
             {// not allowed to use refresh token
-                await WriteTokenAsync(context.Response, token, tokenRequestInfo.Scopes, client).ConfigureAwait(false);
+                await WriteTokenAsync(context.Response, token, tokenRequestInfo.Scopes, client);
 
             }
         }
@@ -522,11 +529,11 @@ namespace OAuth2NetCore
 
             if (string.IsNullOrWhiteSpace(refreshToken))
             {
-                await response.WriteAsync(GenereateTokenJson(token, scopes, client)).ConfigureAwait(false);
+                await response.WriteAsync(GenereateTokenJson(token, scopes, client));
             }
             else
             {
-                await response.WriteAsync(GenereateTokenJson(token, refreshToken, scopes, client)).ConfigureAwait(false);
+                await response.WriteAsync(GenereateTokenJson(token, refreshToken, scopes, client));
             }
         }
 
@@ -543,7 +550,7 @@ namespace OAuth2NetCore
             response.ContentType = OAuth2Consts.ContentType_Json;
             response.Headers.Add(OAuth2Consts.Header_CacheControl, OAuth2Consts.Header_CacheControl_Value);
             response.Headers.Add(OAuth2Consts.Header_Pragma, OAuth2Consts.Header_Pragma_Value);
-            await response.WriteAsync(string.Format(OAuth2Consts.Format_Error, error, errorDescription)).ConfigureAwait(false);
+            await response.WriteAsync(string.Format(OAuth2Consts.Format_Error, error, errorDescription));
         }
 
         /// <summary>

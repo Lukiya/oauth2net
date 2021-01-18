@@ -95,6 +95,7 @@ namespace auth
                 endpoints.MapPost("/connect/token", auth2Server.TokenRequestHandler);
                 endpoints.MapGet("/connect/authorize", auth2Server.AuthorizeRequestHandler);
                 endpoints.MapGet("/connect/endsession", auth2Server.EndSessionRequestHandler);
+                endpoints.MapPost("/connect/endsession", auth2Server.ClearTokenRequestHandler);
 
                 endpoints.MapControllerRoute(
                     name: "default",

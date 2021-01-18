@@ -1,10 +1,14 @@
-﻿using System.Text;
+﻿using Microsoft.IdentityModel.JsonWebTokens;
+using System.Text;
 using System.Text.Json.Serialization;
 
 namespace OAuth2NetCore.Model
 {
     public class TokenDTO
     {
+        private readonly object _locker = new object();
+        private volatile JsonWebToken _jwt;
+
         [JsonPropertyName(OAuth2Consts.Form_AccessToken)]
         public string AccessToken { get; set; }
         [JsonPropertyName(OAuth2Consts.Form_RefreshToken)]
@@ -17,6 +21,25 @@ namespace OAuth2NetCore.Model
         public string Scopes { get; set; }
         [JsonPropertyName(OAuth2Consts.Form_State)]
         public string State { get; set; }
+
+        public JsonWebToken GetJwt()
+        {
+            if (string.IsNullOrWhiteSpace(AccessToken))
+                return null;
+
+            if (_jwt == null)
+            {
+                lock (_locker)
+                {
+                    if (_jwt == null)
+                    {
+                        _jwt = new JsonWebToken(AccessToken);
+                    }
+                }
+            }
+
+            return _jwt;
+        }
 
         public string ToJsonString()
         {

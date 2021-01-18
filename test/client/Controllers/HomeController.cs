@@ -21,7 +21,7 @@ namespace client.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var token = await _tokenDTOStore.GetTokenDTOAsync().ConfigureAwait(false);
+            var token = await _tokenDTOStore.GetTokenDTOAsync();
             return View(token);
         }
 
@@ -35,12 +35,12 @@ namespace client.Controllers
         [HttpGet("/testapi")]
         public async Task<IActionResult> TestApi()
         {
-            var token = await _tokenDTOStore.GetTokenDTOAsync().ConfigureAwait(false);
+            var token = await _tokenDTOStore.GetTokenDTOAsync();
             var client = new HttpClient();
             var request = new HttpRequestMessage(HttpMethod.Get, new Uri("https://di.test.com/users"));
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token.AccessToken);
-            var resp = await client.SendAsync(request).ConfigureAwait(false);
-            var rs = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+            var resp = await client.SendAsync(request);
+            var rs = await resp.Content.ReadAsStringAsync();
 
             return Content(rs);
         }

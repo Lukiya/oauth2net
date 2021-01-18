@@ -18,21 +18,21 @@ namespace OAuth2NetCore.Redis.State
         {
             if (expireSeconds > 0)
             {
-                await Database.StringSetAsync(_prefix + key, value, expiry: TimeSpan.FromSeconds(expireSeconds)).ConfigureAwait(false);
+                await Database.StringSetAsync(_prefix + key, value, expiry: TimeSpan.FromSeconds(expireSeconds));
             }
             else
             {
-                await Database.StringSetAsync(_prefix + key, value).ConfigureAwait(false);
+                await Database.StringSetAsync(_prefix + key, value);
             }
         }
 
         public async Task<string> GetThenRemoveAsync(string key)
         {
             key = _prefix + key;
-            var value = await Database.StringGetAsync(key).ConfigureAwait(false);
+            var value = await Database.StringGetAsync(key);
             if (!string.IsNullOrWhiteSpace(value))
             {
-                await Database.KeyDeleteAsync(key).ConfigureAwait(false);    // remove refresh token after using
+                await Database.KeyDeleteAsync(key);    // remove refresh token after using
             }
 
             return value;
