@@ -20,6 +20,13 @@ namespace client.Controllers
         [Authorize]
         public async Task<IActionResult> Privacy()
         {
+            return View();
+        }
+
+        [Authorize]
+        [HttpGet("/testapi")]
+        public async Task<IActionResult> TestApi()
+        {
             var token = await HttpContext.GetTokenAsync("access_token").ConfigureAwait(false);
             var client = new HttpClient();
             var request = new HttpRequestMessage(HttpMethod.Get, new Uri("https://di.test.com/users"));
@@ -27,7 +34,7 @@ namespace client.Controllers
             var resp = await client.SendAsync(request).ConfigureAwait(false);
             var rs = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
 
-            return View(nameof(Privacy), rs);
+            return Content(rs);
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

@@ -41,10 +41,10 @@ namespace OAuth2NetCore
         /// Required (has default)
         /// </summary>
         public string SignOutCallbackPath { get; set; } = "/signout-oauth";
-        /// <summary>
-        /// Has default
-        /// </summary>
-        public bool SaveTokens { get; set; } = true;
+        ///// <summary>
+        ///// Has default
+        ///// </summary>
+        //public bool SaveTokens { get; set; } = true;
         /// <summary>
         /// Has default
         /// </summary>

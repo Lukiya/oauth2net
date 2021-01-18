@@ -362,7 +362,7 @@ namespace OAuth2NetCore
                               , username: client.ID
                           ).ConfigureAwait(false);
 
-            await WriteTokenAsync(context.Response, token, scopesStr, client.AccessTokenExpireSeconds).ConfigureAwait(false);
+            await WriteTokenAsync(context.Response, token, scopesStr, client).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -502,11 +502,11 @@ namespace OAuth2NetCore
                 //var surferID = GetSurferID(context);
                 var refreshToken = await _tokenGenerator.GenerateRefreshTokenAsync().ConfigureAwait(false);
                 await _tokenStore.SaveRefreshTokenAsync(refreshToken, tokenRequestInfo, client.RefreshTokenExpireSeconds).ConfigureAwait(false);
-                await WriteTokenAsync(context.Response, token, tokenRequestInfo.Scopes, client.AccessTokenExpireSeconds, refreshToken).ConfigureAwait(false);
+                await WriteTokenAsync(context.Response, token, tokenRequestInfo.Scopes, client, refreshToken).ConfigureAwait(false);
             }
             else
             {// not allowed to use refresh token
-                await WriteTokenAsync(context.Response, token, tokenRequestInfo.Scopes, client.AccessTokenExpireSeconds).ConfigureAwait(false);
+                await WriteTokenAsync(context.Response, token, tokenRequestInfo.Scopes, client).ConfigureAwait(false);
 
             }
         }
@@ -514,7 +514,7 @@ namespace OAuth2NetCore
         /// <summary>
         /// write token to browser
         /// </summary>
-        protected virtual async Task WriteTokenAsync(HttpResponse response, string token, string scopes, int expireSeconds, string refreshToken = null)
+        protected virtual async Task WriteTokenAsync(HttpResponse response, string token, string scopes, IClient client, string refreshToken = null)
         {
             response.ContentType = OAuth2Consts.ContentType_Json;
             response.Headers.Add(OAuth2Consts.Header_CacheControl, OAuth2Consts.Header_CacheControl_Value);
@@ -522,11 +522,11 @@ namespace OAuth2NetCore
 
             if (string.IsNullOrWhiteSpace(refreshToken))
             {
-                await response.WriteAsync(GenereateTokenJson(token, scopes, expireSeconds)).ConfigureAwait(false);
+                await response.WriteAsync(GenereateTokenJson(token, scopes, client)).ConfigureAwait(false);
             }
             else
             {
-                await response.WriteAsync(GenereateTokenJson(token, refreshToken, scopes, expireSeconds)).ConfigureAwait(false);
+                await response.WriteAsync(GenereateTokenJson(token, refreshToken, scopes, client)).ConfigureAwait(false);
             }
         }
 
@@ -549,11 +549,11 @@ namespace OAuth2NetCore
         /// <summary>
         /// generate token json 
         /// </summary>
-        protected virtual string GenereateTokenJson(string token, string scopes, int expireSeconds) => string.Format(OAuth2Consts.Format_Token1, token, expireSeconds, scopes);
+        protected virtual string GenereateTokenJson(string token, string scopes, IClient client) => string.Format(OAuth2Consts.Format_Token1, token, client.AccessTokenExpireSeconds, scopes);
 
         /// <summary>
         /// generate token json (with refresh token)
         /// </summary>
-        protected virtual string GenereateTokenJson(string token, string refreshToken, string scopes, int expireSeconds) => string.Format(OAuth2Consts.Format_Token2, token, refreshToken, expireSeconds, scopes);
+        protected virtual string GenereateTokenJson(string token, string refreshToken, string scopes, IClient client) => string.Format(OAuth2Consts.Format_Token2, token, refreshToken, client.AccessTokenExpireSeconds, client.RefreshTokenExpireSeconds, scopes);
     }
 }
