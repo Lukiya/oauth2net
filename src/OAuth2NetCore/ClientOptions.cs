@@ -74,7 +74,6 @@ namespace OAuth2NetCore
         /// </summary>
         public Func<IServiceProvider, IStateGenerator> StateGeneratorFactory { get; set; }
 
-
         private static IEnumerable<Claim> BuildIdentityClaims(JsonWebToken token)
         {
             foreach (var claim in token.Claims)

@@ -7,12 +7,12 @@ using System.Threading.Tasks;
 
 namespace OAuth2NetCore.Redis.Token
 {
-    public class RedisTokenStore : RedisStore, ITokenStore
+    public class RedisTokenInfoStore : RedisStore, ITokenInfoStore
     {
         private readonly string _prefix;
         private readonly ISecretEncryptor _secertEncryptor;
 
-        public RedisTokenStore(string connStr, int db = 0, string prefix = "rt:", ISecretEncryptor secretEncryptor = null)
+        public RedisTokenInfoStore(string connStr, int db = 0, string prefix = "rt:", ISecretEncryptor secretEncryptor = null)
             : base(connStr, db)
         {
             _prefix = prefix;

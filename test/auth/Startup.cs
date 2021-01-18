@@ -42,7 +42,7 @@ namespace auth
 
             services.AddOAuth2AuthServer(options =>
             {
-                options.TokenStoreFactory = _ => new RedisTokenStore(rediConnStr, secretEncryptor: new X509SecretEncryptor(cert));
+                options.TokenStoreFactory = _ => new RedisTokenInfoStore(rediConnStr, secretEncryptor: new X509SecretEncryptor(cert));
                 options.SecurityKeyProviderFactory = _ => new X509SecurityKeyProvider(cert);
                 options.StateStoreFactory = _ => new RedisStateStore(rediConnStr, prefix: "tst:");
                 options.ClientStoreFactory = _ => new RedisClientStore(rediConnStr, "test:CLIENTS", secretEncryptor: new X509SecretEncryptor(cert));

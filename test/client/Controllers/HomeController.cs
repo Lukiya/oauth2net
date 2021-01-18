@@ -1,7 +1,7 @@
 ﻿using client.Models;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using OAuth2NetCore.Store;
 using System;
 using System.Diagnostics;
 using System.Net.Http;
@@ -12,13 +12,21 @@ namespace client.Controllers
 {
     public class HomeController : Controller
     {
-        public IActionResult Index()
+        private readonly ITokenDTOStore _tokenDTOStore;
+
+        public HomeController(ITokenDTOStore tokenDTOStore)
         {
-            return View();
+            _tokenDTOStore = tokenDTOStore;
+        }
+
+        public async Task<IActionResult> Index()
+        {
+            var token = await _tokenDTOStore.GetTokenDTOAsync().ConfigureAwait(false);
+            return View(token);
         }
 
         [Authorize]
-        public async Task<IActionResult> Privacy()
+        public IActionResult Privacy()
         {
             return View();
         }
@@ -27,10 +35,10 @@ namespace client.Controllers
         [HttpGet("/testapi")]
         public async Task<IActionResult> TestApi()
         {
-            var token = await HttpContext.GetTokenAsync("access_token").ConfigureAwait(false);
+            var token = await _tokenDTOStore.GetTokenDTOAsync().ConfigureAwait(false);
             var client = new HttpClient();
             var request = new HttpRequestMessage(HttpMethod.Get, new Uri("https://di.test.com/users"));
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token.AccessToken);
             var resp = await client.SendAsync(request).ConfigureAwait(false);
             var rs = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
 

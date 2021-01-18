@@ -1,11 +1,9 @@
-﻿@using Microsoft.AspNetCore.Authentication
-@{
-    ViewData["Title"] = "Home Page";
-}
+﻿@{ ViewData["Title"] = "Home Page"; }
+@model OAuth2NetCore.Model.TokenDTO
 
 <h4>Access Token</h4>
-<textarea class="form-control" style="width:100%;height:190px;">@(await Context.GetTokenAsync("access_token")) </textarea>
+<textarea class="form-control" style="width:100%;height:190px;">@(Model.AccessToken) </textarea>
 <h4>Refresh Token</h4>
-<textarea class="form-control" style="width:100%;height:50px;">@(await Context.GetTokenAsync("refresh_token")) </textarea>
+<textarea class="form-control" style="width:100%;height:50px;">@(Model.RefreshToken) </textarea>
 <h4>expire</h4>
-<textarea class="form-control" style="width:100%;height:50px;">@(await Context.GetTokenAsync("expires_at")) </textarea>
+<textarea class="form-control" style="width:100%;height:50px;">@(Model.AccessTokenExpiresIn) </textarea>

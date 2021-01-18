@@ -12,6 +12,8 @@
         public const string Claim_Name = "name";
         public const string Claim_Audience = "aud";
         public const string Claim_Issuer = "iss";
+        public const string Claim_AccessTokenExpire = "exp";
+        public const string Claim_RefreshTokenExpire = "rexp";
         public const string Form_GrantType = "grant_type";
         public const string Form_ClientID = "client_id";
         public const string Form_ClientSecret = "client_secret";
@@ -28,7 +30,6 @@
         public const string Form_RefreshToken = "refresh_token";
         public const string Form_TokenType = "token_type";
         public const string Form_ExpiresIn = "expires_in";
-        public const string Form_RefreshTokenExpiresIn = "r_expires";
         public const string Form_CodeChallenge = "code_challenge";
         public const string Form_CodeChallengeMethod = "code_challenge_method";
         public const string Form_CodeVerifier = "code_verifier";
@@ -39,8 +40,8 @@
         public const string GrantType_Implicit = "implicit";
         public const string GrantType_ResourceOwner = "password";
         public const string GrantType_RefreshToken = "refresh_token";
-        public const string Format_Token1 = "{{\"" + Form_AccessToken + "\":\"{0}\",\"" + Form_ExpiresIn + "\":{1},\"" + Form_Scope + "\":\"{2}\",\"" + Form_TokenType + "\":\"Bearer\"}}";
-        public const string Format_Token2 = "{{\"" + Form_AccessToken + "\":\"{0}\",\"" + Form_RefreshToken + "\":\"{1}\",\"" + Form_ExpiresIn + "\":{2},\"" + Form_RefreshTokenExpiresIn + "\":{3},\"" + Form_Scope + "\":\"{4}\",\"" + Form_TokenType + "\":\"Bearer\"}}";
+        //public const string Format_Token1 = "{{\"" + Form_AccessToken + "\":\"{0}\",\"" + Form_ExpiresIn + "\":{1},\"" + Form_Scope + "\":\"{2}\",\"" + Form_TokenType + "\":\"Bearer\"}}";
+        //public const string Format_Token2 = "{{\"" + Form_AccessToken + "\":\"{0}\",\"" + Form_RefreshToken + "\":\"{1}\",\"" + Form_ExpiresIn + "\":{2},\"" + Form_RefreshTokenExpiresIn + "\":{3},\"" + Form_Scope + "\":\"{4}\",\"" + Form_TokenType + "\":\"Bearer\"}}";
         public const string Format_Error = "{{\"error\":\"{0}\", \"error_description\":\"{1}\"}}";
         public const string Msg_Success = "";
         public const string Err_invalid_request = "invalid_request";
@@ -59,9 +60,11 @@
         public const string Token_Access = "access_token";
         public const string Token_Refresh = "refresh_token";
         public const string Token_ExpiresAt = "expires_at";
+        public const string Token_Type_Bearer = "Bearer";
         public const string UtcTimesamp = "yyyy-MM-ddTHH:mm:ss.0000000+00:00";
         public const string Cookie_Surfer = "oatuh2.surfer";
         public const char Seperator_Scope = ' ';
         public static readonly char[] Seperators_Auth = new char[] { ':' };
+
     }
 }

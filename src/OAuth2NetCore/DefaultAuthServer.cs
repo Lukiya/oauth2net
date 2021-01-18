@@ -18,7 +18,7 @@ namespace OAuth2NetCore
         private readonly IClientValidator _clientValidator;
         private readonly ITokenGenerator _tokenGenerator;
         private readonly IAuthCodeStore _authCodeStore;
-        private readonly ITokenStore _tokenStore;
+        private readonly ITokenInfoStore _tokenStore;
         private readonly IStateStore _stateStore;
         private readonly IAuthCodeGenerator _authCodeGenerator;
         private readonly IResourceOwnerValidator _resourceOwnerValidator;
@@ -37,7 +37,7 @@ namespace OAuth2NetCore
               IClientValidator clientValidator
             , ITokenGenerator tokenGenerator
             , IAuthCodeStore authCodeStore
-            , ITokenStore tokenStore
+            , ITokenInfoStore tokenStore
             , IStateStore stateStore
             , IAuthCodeGenerator authCodeGenerator
             , IResourceOwnerValidator resourceOwnerValidator
@@ -549,11 +549,32 @@ namespace OAuth2NetCore
         /// <summary>
         /// generate token json 
         /// </summary>
-        protected virtual string GenereateTokenJson(string token, string scopes, IClient client) => string.Format(OAuth2Consts.Format_Token1, token, client.AccessTokenExpireSeconds, scopes);
+        protected virtual string GenereateTokenJson(string token, string scopes, IClient client)
+        {
+            var tokenDTO = new TokenDTO
+            {
+                TokenType = OAuth2Consts.Token_Type_Bearer,
+                AccessToken = token,
+                AccessTokenExpiresIn = client.AccessTokenExpireSeconds,
+                Scopes = scopes,
+            };
+            return tokenDTO.ToJsonString();
+        }
 
         /// <summary>
         /// generate token json (with refresh token)
         /// </summary>
-        protected virtual string GenereateTokenJson(string token, string refreshToken, string scopes, IClient client) => string.Format(OAuth2Consts.Format_Token2, token, refreshToken, client.AccessTokenExpireSeconds, client.RefreshTokenExpireSeconds, scopes);
+        protected virtual string GenereateTokenJson(string token, string refreshToken, string scopes, IClient client)
+        {
+            var tokenDTO = new TokenDTO
+            {
+                TokenType = OAuth2Consts.Token_Type_Bearer,
+                AccessToken = token,
+                RefreshToken = refreshToken,
+                AccessTokenExpiresIn = client.AccessTokenExpireSeconds,
+                Scopes = scopes,
+            };
+            return tokenDTO.ToJsonString();
+        }
     }
 }

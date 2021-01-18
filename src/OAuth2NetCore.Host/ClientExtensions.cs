@@ -1,10 +1,14 @@
-﻿using Microsoft.AspNetCore.Authentication.Cookies;
+﻿using IdentityModel.Client;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OAuth;
-using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.IdentityModel.JsonWebTokens;
 using OAuth2NetCore;
+using OAuth2NetCore.Host;
 using OAuth2NetCore.Model;
 using OAuth2NetCore.Security;
+using OAuth2NetCore.Store;
 using System;
 using System.IO;
 using System.Net.Http;
@@ -18,13 +22,27 @@ namespace Microsoft.Extensions.DependencyInjection
 {
     public static class ClientExtensions
     {
-        private static readonly HttpClient _httpClient = new HttpClient();  // This won't honor DNS changes. TODO: use IHttpClientFactory.CreateClient
         public static IServiceCollection AddOAuth2Client(this IServiceCollection services, ClientOptions options, Action<ClientOptions> configOptions)
         {
             configOptions(options);
             CheckOptions(services, options);
 
             services.AddSingleton(options);
+
+            services.AddHttpClient();
+            services.AddHttpContextAccessor();
+            services.AddTransient<IDataSerializer<TokenDTO>, JsonDataSerializer<TokenDTO>>();
+            services.AddTransient<ISecureDataFormat<TokenDTO>, SecureDataFormat<TokenDTO>>();
+            services.AddTransient(c =>
+            {
+                var dpp = c.GetService<IDataProtectionProvider>();
+                return dpp.CreateProtector(nameof(TokenDTO));
+            });
+            services.AddTransient<ITokenDTOStore, HttpContextTokenDTOStore>();
+
+            var sp = services.BuildServiceProvider();
+            var httpClientFactory = sp.GetService<IHttpClientFactory>();
+            var tokenDTOStore = sp.GetService<ITokenDTOStore>();
 
             services.AddAuthentication(authOptions =>
             {
@@ -43,7 +61,7 @@ namespace Microsoft.Extensions.DependencyInjection
                     //};
                     if (options.AutoRefreshToken)
                     {
-                        o.Events.OnValidatePrincipal = x => ValidatePrincipal(x, options);
+                        o.Events.OnValidatePrincipal = x => ValidatePrincipal(x, httpClientFactory, tokenDTOStore, options);
                     }
                 })
                 .AddOAuth(OAuthDefaults.DisplayName, o =>
@@ -62,16 +80,17 @@ namespace Microsoft.Extensions.DependencyInjection
 
                     o.Events.OnCreatingTicket = async context =>
                     {
-                        // Save token to cookie
-                        await context.HttpContext.SaveTokenAsync(context.TokenResponse).ConfigureAwait(false);
-
-                        var token = new JsonWebToken(context.AccessToken);
                         context.Principal = new ClaimsPrincipal(new ClaimsIdentity(OAuthDefaults.DisplayName, OAuth2Consts.Claim_Name, OAuth2Consts.Claim_Role));
 
-                        var claims = options.IdentityClaimsBuilder(token);
-                        foreach (var claim in claims)
+                        // Save token to cookie, and return a json web token
+                        var jwt = await tokenDTOStore.SaveTokenDTOAsync(context.TokenResponse.Response.ToJsonString()).ConfigureAwait(false);
+                        if (jwt != null)
                         {
-                            context.Identity.AddClaim(claim);
+                            var claims = options.IdentityClaimsBuilder(jwt);
+                            foreach (var claim in claims)
+                            {
+                                context.Identity.AddClaim(claim);
+                            }
                         }
                     };
                 });
@@ -84,43 +103,44 @@ namespace Microsoft.Extensions.DependencyInjection
         //    return "";
         //}
 
-        private static async Task ValidatePrincipal(CookieValidatePrincipalContext context, ClientOptions options)
+        private static async Task ValidatePrincipal(CookieValidatePrincipalContext context, IHttpClientFactory httpClientFactory, ITokenDTOStore tokenDTOStore, ClientOptions options)
         {
-            var token = await context.HttpContext.GetTokenAsync();
+            var tokenDTO = await tokenDTOStore.GetTokenDTOAsync().ConfigureAwait(false);
+            var jwt = new JsonWebToken(tokenDTO.AccessToken);
 
-            var expStr = context.Properties.GetTokenValue(OAuth2Consts.Token_ExpiresAt);
-            if (!DateTimeOffset.TryParse(expStr, out var exp))
-            {// expStr format invalid
-                // reject principal
-                context.RejectPrincipal();
-                // sign user out
-                await context.HttpContext.SignOutAsync().ConfigureAwait(false);
-                return;
-            }
+            //if (!jwt.TryGetPayloadValue<long>(OAuth2Consts.Claim_AccessTokenExpire, out var exp))
+            //{// expStr format invalid
+            //    // reject principal
+            //    context.RejectPrincipal();
+            //    // sign user out
+            //    await context.HttpContext.SignOutAsync().ConfigureAwait(false);
+            //    return;
+            //}
 
-            if (DateTimeOffset.UtcNow > exp)
+            if (DateTimeOffset.UtcNow > jwt.ValidTo)
             {// access token expired
-                var refreshToken = context.Properties.GetTokenValue(OAuth2Consts.Token_Refresh);
-                if (!string.IsNullOrWhiteSpace(refreshToken))
+                if (!string.IsNullOrWhiteSpace(tokenDTO.RefreshToken))
                 {// refresh token exists
 
                     // send refresh token request
-                    var refreshTokenResp = await _httpClient.RequestRefreshTokenAsync(new RefreshTokenRequest
+                    var httpClient = httpClientFactory.CreateClient();
+                    var refreshTokenResp = await httpClient.RequestRefreshTokenAsync(new RefreshTokenRequest
                     {
                         Address = options.TokenEndpoint,
                         ClientId = options.ClientID,
                         ClientSecret = options.ClientSecret,
-                        RefreshToken = refreshToken,
+                        RefreshToken = tokenDTO.RefreshToken,
                         Scope = string.Join(OAuth2Consts.Seperator_Scope, options.Scopes)
                     });
 
                     if (!refreshTokenResp.IsError)
                     {// refresh success
-                        context.Properties.UpdateTokenValue(OAuth2Consts.Token_Access, refreshTokenResp.AccessToken);
-                        context.Properties.UpdateTokenValue(OAuth2Consts.Token_Refresh, refreshTokenResp.RefreshToken);
-                        var expireAt = DateTimeOffset.UtcNow.AddSeconds(refreshTokenResp.ExpiresIn).ToString(OAuth2Consts.UtcTimesamp);
-                        context.Properties.UpdateTokenValue(OAuth2Consts.Token_ExpiresAt, expireAt);
-                        context.ShouldRenew = true;
+                        await tokenDTOStore.SaveTokenDTOAsync(refreshTokenResp.Raw).ConfigureAwait(false);
+                        //context.Properties.UpdateTokenValue(OAuth2Consts.Token_Access, refreshTokenResp.AccessToken);
+                        //context.Properties.UpdateTokenValue(OAuth2Consts.Token_Refresh, refreshTokenResp.RefreshToken);
+                        //var expireAt = DateTimeOffset.UtcNow.AddSeconds(refreshTokenResp.ExpiresIn).ToString(OAuth2Consts.UtcTimesamp);
+                        //context.Properties.UpdateTokenValue(OAuth2Consts.Token_ExpiresAt, expireAt);
+                        //context.ShouldRenew = true;
                         return;
                     }
                 }
@@ -168,34 +188,6 @@ namespace Microsoft.Extensions.DependencyInjection
             else
                 // use default
                 services.AddSingleton<IClientServer, DefaultClientServer>();
-        }
-    }
-
-    public static class ClientTokenExtensions
-    {
-        private const string _authCookieName = "auth.cookie2";
-
-        public static Task SaveTokenAsync(this HttpContext httpContext, OAuthTokenResponse tokenResponse)
-        {
-            var json = tokenResponse.Response.ToJsonString();
-            var token = JsonSerializer.Deserialize<TokenDTO>(json);
-            var cookieOptions = new CookieOptions
-            {
-                Expires = DateTimeOffset.UtcNow.AddSeconds(token.RefreshTokenExpiresIn)
-            };
-            httpContext.Response.Cookies.Append(_authCookieName, json, cookieOptions);
-            return Task.CompletedTask;
-        }
-
-        public static Task<TokenDTO> GetTokenAsync(this HttpContext httpContext)
-        {
-            var json = httpContext.Request.Cookies[_authCookieName];
-            if (string.IsNullOrWhiteSpace(json))
-                return null;
-
-            var token = JsonSerializer.Deserialize<TokenDTO>(json);
-
-            return Task.FromResult(token);
         }
 
         private static string ToJsonString(this JsonDocument jdoc)
