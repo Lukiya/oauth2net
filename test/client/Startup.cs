@@ -29,10 +29,10 @@ namespace client
 
             services.AddControllersWithViews();
 
-            services.AddOAuth2Client(clientOptions, o =>
+            services.AddOAuth2Client(o =>
             {
                 o.StateStoreFactory = _ => new RedisStateStore(rediConnStr);
-            });
+            }, clientOptions);
 
             services.AddSimpleInjector(_container, options =>
             {

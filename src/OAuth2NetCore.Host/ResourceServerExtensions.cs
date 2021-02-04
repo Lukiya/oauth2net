@@ -7,11 +7,12 @@ namespace Microsoft.Extensions.DependencyInjection
 {
     public static class ResourceServerExtensions
     {
-        public static IServiceCollection AddOAuth2Resource(this IServiceCollection services, Action<ResourceOptions> configOptions)
+        public static IServiceCollection AddOAuth2Resource(this IServiceCollection services, Action<ResourceOptions> configOptions, ResourceOptions options = null)
         {
             JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 
-            var options = new ResourceOptions();
+            options = options ?? new ResourceOptions();
+
             configOptions(options);
             CheckOptions(options);
 

@@ -21,8 +21,9 @@ namespace Microsoft.Extensions.DependencyInjection
 {
     public static class ClientServerExtensions
     {
-        public static IServiceCollection AddOAuth2Client(this IServiceCollection services, ClientOptions options, Action<ClientOptions> configOptions)
+        public static IServiceCollection AddOAuth2Client(this IServiceCollection services, Action<ClientOptions> configOptions, ClientOptions options = null)
         {
+            options = options ?? new ClientOptions();
             configOptions(options);
             CheckOptions(services, options);
 

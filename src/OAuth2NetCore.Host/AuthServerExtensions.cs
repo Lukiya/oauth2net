@@ -10,8 +10,7 @@ namespace Microsoft.Extensions.DependencyInjection
     {
         public static IServiceCollection AddOAuth2AuthServer(this IServiceCollection services, Action<AuthServerOptions> configOptions, AuthServerOptions options = null)
         {
-            if (options == null)
-                options = new AuthServerOptions();
+            options = options ?? new AuthServerOptions();
 
             configOptions(options);
 
