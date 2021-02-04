@@ -5,7 +5,7 @@ using System.IdentityModel.Tokens.Jwt;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
-    public static class ResourceExtensions
+    public static class ResourceServerExtensions
     {
         public static IServiceCollection AddOAuth2Resource(this IServiceCollection services, Action<ResourceOptions> configOptions)
         {
