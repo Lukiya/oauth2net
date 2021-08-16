@@ -1,14 +1,15 @@
-﻿using Microsoft.IdentityModel.JsonWebTokens;
+﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.OAuth;
+using Microsoft.IdentityModel.JsonWebTokens;
 using OAuth2NetCore.Security;
 using OAuth2NetCore.Store;
 using System;
 using System.Collections.Generic;
 using System.Security.Claims;
+using System.Threading.Tasks;
 
-namespace OAuth2NetCore
-{
-    public class ClientOptions
-    {
+namespace OAuth2NetCore {
+    public class ClientOptions {
         /// <summary>
         /// Required
         /// </summary>
@@ -60,7 +61,7 @@ namespace OAuth2NetCore
         /// <summary>
         /// Required (has default)
         /// </summary>
-        public Func<JsonWebToken, IEnumerable<Claim>> IdentityClaimsBuilder { get; set; } = BuildIdentityClaims;
+        public Func<JsonWebToken, Task<IEnumerable<Claim>>> IdentityClaimsBuilder { get; set; } = BuildIdentityClaims;
         /// <summary>
         /// Required
         /// </summary>
@@ -73,16 +74,33 @@ namespace OAuth2NetCore
         /// Optional
         /// </summary>
         public Func<IServiceProvider, IStateGenerator> StateGeneratorFactory { get; set; }
+        /// <summary>
+        /// Optional
+        /// </summary>
+        public Func<TicketReceivedContext, Task> OnTicketReceived { get; set; }
+        /// <summary>
+        /// Optional
+        /// </summary>
+        public Func<OAuthCreatingTicketContext, Task> OnCreatingTicket { get; set; }
+        /// <summary>
+        /// Optional
+        /// </summary>
+        public Func<RedirectContext<OAuthOptions>, Task> OnRedirectToAuthorizationEndpoint { get; set; }
+        /// <summary>
+        /// Optional
+        /// </summary>
+        public Func<RemoteFailureContext, Task> OnRemoteFailure { get; set; }
 
-        private static IEnumerable<Claim> BuildIdentityClaims(JsonWebToken token)
-        {
-            foreach (var claim in token.Claims)
-            {
-                if (claim.Type == OAuth2Consts.Claim_Name || claim.Type == OAuth2Consts.Claim_Role)
-                {
-                    yield return claim;
+        private static Task<IEnumerable<Claim>> BuildIdentityClaims(JsonWebToken token) {
+            IList<Claim> r = new List<Claim>();
+
+            foreach (var claim in token.Claims) {
+                if (claim.Type == OAuth2Consts.Claim_Name || claim.Type == OAuth2Consts.Claim_Role) {
+                    r.Add(claim);
                 }
             }
+
+            return Task.FromResult<IEnumerable<Claim>>(r);
         }
     }
 }

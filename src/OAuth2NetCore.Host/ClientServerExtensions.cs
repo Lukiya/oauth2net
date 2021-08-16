@@ -17,12 +17,9 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using ClientOptions = OAuth2NetCore.ClientOptions;
 
-namespace Microsoft.Extensions.DependencyInjection
-{
-    public static class ClientServerExtensions
-    {
-        public static IServiceCollection AddOAuth2Client(this IServiceCollection services, Action<ClientOptions> configOptions, ClientOptions options = null)
-        {
+namespace Microsoft.Extensions.DependencyInjection {
+    public static class ClientServerExtensions {
+        public static IServiceCollection AddOAuth2Client(this IServiceCollection services, Action<ClientOptions> configOptions, ClientOptions options = null) {
             options = options ?? new ClientOptions();
             configOptions(options);
             CheckOptions(services, options);
@@ -33,8 +30,7 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddHttpContextAccessor();
             services.AddTransient<IDataSerializer<TokenDTO>, JsonDataSerializer<TokenDTO>>();
             services.AddTransient<ISecureDataFormat<TokenDTO>, SecureDataFormat<TokenDTO>>();
-            services.AddTransient(c =>
-            {
+            services.AddTransient(c => {
                 var dpp = c.GetService<IDataProtectionProvider>();
                 return dpp.CreateProtector(nameof(TokenDTO));
             });
@@ -44,14 +40,12 @@ namespace Microsoft.Extensions.DependencyInjection
             var httpClientFactory = sp.GetService<IHttpClientFactory>();
             var tokenDTOStore = sp.GetService<ITokenDTOStore>();
 
-            services.AddAuthentication(authOptions =>
-            {
+            services.AddAuthentication(authOptions => {
                 authOptions.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                 authOptions.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                 authOptions.DefaultChallengeScheme = OAuthDefaults.DisplayName;
             })
-                .AddCookie(o =>
-                {
+                .AddCookie(o => {
                     //o.Events.OnSigningIn = context =>
                     //{
                     //    //context.Properties.IsPersistent = true;
@@ -59,15 +53,12 @@ namespace Microsoft.Extensions.DependencyInjection
                     //    //var expStr = context.Properties.GetTokenValue(OAuth2Consts.Form_RefreshToken);
                     //    return Task.CompletedTask;
                     //};
-                    if (options.AutoRefreshToken)
-                    {
+                    if (options.AutoRefreshToken) {
                         o.Events.OnValidatePrincipal = x => ValidatePrincipal(x, httpClientFactory, tokenDTOStore, options);
                     }
                 })
-                .AddOAuth<OAuthOptions, OAuth2Handler>(OAuthDefaults.DisplayName, o =>
-                {
-                    foreach (var scope in options.Scopes)
-                    {
+                .AddOAuth<OAuthOptions, OAuth2Handler>(OAuthDefaults.DisplayName, o => {
+                    foreach (var scope in options.Scopes) {
                         o.Scope.Add(scope);
                     }
                     o.ClientId = options.ClientID;
@@ -78,28 +69,39 @@ namespace Microsoft.Extensions.DependencyInjection
                     //o.SaveTokens = options.SaveTokens;    // Use customized token store
                     o.UsePkce = options.UsePkce;
 
-                    o.Events.OnCreatingTicket = async context =>
-                    {
-                        context.Principal = new ClaimsPrincipal(new ClaimsIdentity(OAuthDefaults.DisplayName, OAuth2Consts.Claim_Name, OAuth2Consts.Claim_Role));
+                    
+                    ////////// Events
+                    // OnAccessDenied
+                    //o.Events.OnAccessDenied = options.OnAccessDenied;
+                    // OnCreatingTicket
+                    if (options.OnCreatingTicket != null) {
+                        o.Events.OnCreatingTicket = options.OnCreatingTicket;
+                    } else {
+                        o.Events.OnCreatingTicket = async context => {
+                            context.Principal = new ClaimsPrincipal(new ClaimsIdentity(OAuthDefaults.DisplayName, OAuth2Consts.Claim_Name, OAuth2Consts.Claim_Role));
 
-                        // Save token to cookie, and return a json web token
-                        var jwt = await tokenDTOStore.SaveTokenDTOAsync(context.TokenResponse.Response.ToJsonString());
-                        if (jwt != null)
-                        {
-                            var claims = options.IdentityClaimsBuilder(jwt);
-                            foreach (var claim in claims)
-                            {
-                                context.Identity.AddClaim(claim);
+                            // Save token to cookie, and return a json web token
+                            var jwt = await tokenDTOStore.SaveTokenDTOAsync(context.TokenResponse.Response.ToJsonString());
+                            if (jwt != null) {
+                                var claims = await options.IdentityClaimsBuilder(jwt);
+                                foreach (var claim in claims) {
+                                    context.Identity.AddClaim(claim);
+                                }
                             }
-                        }
-                    };
+                        };
+                    }
+                    // OnRedirectToAuthorizationEndpoint
+                    o.Events.OnRedirectToAuthorizationEndpoint = options.OnRedirectToAuthorizationEndpoint;
+                    // OnRemoteFailure
+                    o.Events.OnRemoteFailure = options.OnRemoteFailure;
+                    // OnTicketReceived
+                    o.Events.OnTicketReceived = options.OnTicketReceived;
                 });
 
             return services;
         }
 
-        private static async Task ValidatePrincipal(CookieValidatePrincipalContext context, IHttpClientFactory httpClientFactory, ITokenDTOStore tokenDTOStore, ClientOptions options)
-        {
+        private static async Task ValidatePrincipal(CookieValidatePrincipalContext context, IHttpClientFactory httpClientFactory, ITokenDTOStore tokenDTOStore, ClientOptions options) {
             var tokenDTO = await tokenDTOStore.GetTokenDTOAsync();
             var jwt = tokenDTO.GetJwt();
 
@@ -112,15 +114,12 @@ namespace Microsoft.Extensions.DependencyInjection
             //    return;
             //}
 
-            if (DateTimeOffset.UtcNow > jwt.ValidTo)
-            {// access token expired
-                if (!string.IsNullOrWhiteSpace(tokenDTO.RefreshToken))
-                {// refresh token exists
+            if (DateTimeOffset.UtcNow > jwt.ValidTo) {// access token expired
+                if (!string.IsNullOrWhiteSpace(tokenDTO.RefreshToken)) {// refresh token exists
 
                     // send refresh token request
                     var httpClient = httpClientFactory.CreateClient();
-                    var refreshTokenResp = await httpClient.RequestRefreshTokenAsync(new RefreshTokenRequest
-                    {
+                    var refreshTokenResp = await httpClient.RequestRefreshTokenAsync(new RefreshTokenRequest {
                         Address = options.TokenEndpoint,
                         ClientId = options.ClientID,
                         ClientSecret = options.ClientSecret,
@@ -128,8 +127,7 @@ namespace Microsoft.Extensions.DependencyInjection
                         Scope = string.Join(OAuth2Consts.Seperator_Scope, options.Scopes)
                     });
 
-                    if (!refreshTokenResp.IsError)
-                    {// refresh success
+                    if (!refreshTokenResp.IsError) {// refresh success
                         await tokenDTOStore.SaveTokenDTOAsync(refreshTokenResp.Raw);
                         //context.Properties.UpdateTokenValue(OAuth2Consts.Token_Access, refreshTokenResp.AccessToken);
                         //context.Properties.UpdateTokenValue(OAuth2Consts.Token_Refresh, refreshTokenResp.RefreshToken);
@@ -147,8 +145,7 @@ namespace Microsoft.Extensions.DependencyInjection
             }
         }
 
-        private static void CheckOptions(IServiceCollection services, ClientOptions options)
-        {
+        private static void CheckOptions(IServiceCollection services, ClientOptions options) {
             if (options.IdentityClaimsBuilder == null)
                 throw new ArgumentNullException($"{nameof(options)}.{nameof(options.IdentityClaimsBuilder)}");
             if (string.IsNullOrWhiteSpace(options.ClientID))
@@ -185,11 +182,9 @@ namespace Microsoft.Extensions.DependencyInjection
                 services.AddSingleton<IClientServer, DefaultClientServer>();
         }
 
-        private static string ToJsonString(this JsonDocument jdoc)
-        {
+        private static string ToJsonString(this JsonDocument jdoc) {
             using (var stream = new MemoryStream())
-            using (var writer = new Utf8JsonWriter(stream))
-            {
+            using (var writer = new Utf8JsonWriter(stream)) {
                 jdoc.WriteTo(writer);
                 writer.Flush();
                 return Encoding.UTF8.GetString(stream.ToArray());
