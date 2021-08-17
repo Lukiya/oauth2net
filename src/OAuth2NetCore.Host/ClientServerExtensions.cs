@@ -69,7 +69,7 @@ namespace Microsoft.Extensions.DependencyInjection {
                     //o.SaveTokens = options.SaveTokens;    // Use customized token store
                     o.UsePkce = options.UsePkce;
 
-                    
+
                     ////////// Events
                     // OnAccessDenied
                     //o.Events.OnAccessDenied = options.OnAccessDenied;
@@ -91,11 +91,14 @@ namespace Microsoft.Extensions.DependencyInjection {
                         };
                     }
                     // OnRedirectToAuthorizationEndpoint
-                    o.Events.OnRedirectToAuthorizationEndpoint = options.OnRedirectToAuthorizationEndpoint;
+                    if (options.OnRedirectToAuthorizationEndpoint != null)
+                        o.Events.OnRedirectToAuthorizationEndpoint = options.OnRedirectToAuthorizationEndpoint;
                     // OnRemoteFailure
-                    o.Events.OnRemoteFailure = options.OnRemoteFailure;
+                    if (options.OnRemoteFailure != null)
+                        o.Events.OnRemoteFailure = options.OnRemoteFailure;
                     // OnTicketReceived
-                    o.Events.OnTicketReceived = options.OnTicketReceived;
+                    if (options.OnTicketReceived != null)
+                        o.Events.OnTicketReceived = options.OnTicketReceived;
                 });
 
             return services;
