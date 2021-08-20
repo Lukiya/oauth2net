@@ -1,40 +1,43 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using System.IdentityModel.Tokens.Jwt;
 
-namespace Microsoft.Extensions.DependencyInjection
-{
-    public static class ResourceServerExtensions
-    {
-        public static IServiceCollection AddOAuth2Resource(this IServiceCollection services, Action<ResourceOptions> configOptions, ResourceOptions options = null)
-        {
+namespace Microsoft.Extensions.DependencyInjection {
+    public static class ResourceServerExtensions {
+        public static IServiceCollection AddOAuth2Resource(this IServiceCollection services, Action<ResourceOptions> configOptions, ResourceOptions options = null) {
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                .AddJwtBearerAuth(configOptions, options);
+
+            return services;
+        }
+
+        public static AuthenticationBuilder AddJwtBearerAuth(this AuthenticationBuilder authBuilder, Action<ResourceOptions> configOptions, ResourceOptions options = null) {
             JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 
             options = options ?? new ResourceOptions();
 
             configOptions(options);
+
             CheckOptions(options);
 
-            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                .AddJwtBearer(jwtOptions =>
-                {
-                    jwtOptions.TokenValidationParameters = new TokenValidationParameters
-                    {
+            authBuilder
+                .AddJwtBearer(jwtOptions => {
+                    jwtOptions.TokenValidationParameters = new TokenValidationParameters {
                         NameClaimType = options.NameClaimType,
                         RoleClaimType = options.RoleClaimType,
                         IssuerSigningKey = options.IssuerSigningKey,
                         ValidIssuer = options.ValidIssuer,
                         ValidAudience = options.ValidAudience,
                     };
-                });
+                }
+            );
 
-
-            return services;
+            return authBuilder;
         }
 
-        private static void CheckOptions(ResourceOptions options)
-        {
+        private static void CheckOptions(ResourceOptions options) {
             if (options.IssuerSigningKey == null)
                 throw new ArgumentNullException($"{nameof(options)}.{nameof(options.IssuerSigningKey)}");
 

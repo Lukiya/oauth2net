@@ -54,7 +54,7 @@ namespace Microsoft.Extensions.DependencyInjection {
                     //    return Task.CompletedTask;
                     //};
                     if (options.AutoRefreshToken) {
-                        // 验证身份令牌，自动刷新
+                        // Validate principal, auto refresh token
                         o.Events.OnValidatePrincipal = x => ValidatePrincipal(x, httpClientFactory, tokenDTOStore, options);
                     }
                 })
