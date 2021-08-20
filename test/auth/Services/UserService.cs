@@ -6,7 +6,8 @@ namespace auth.Services
     {
         public Task<bool> VerifyAsync(string username, string password)
         {
-            return Task.FromResult(username == password);
+            //return Task.FromResult(username == password);
+            return Task.FromResult(true);
         }
     }
 }
