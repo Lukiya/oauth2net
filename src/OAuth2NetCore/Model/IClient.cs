@@ -1,13 +1,12 @@
 ﻿using System.Collections.Generic;
 
-namespace OAuth2NetCore.Model
-{
-    public interface IClient
-    {
+namespace OAuth2NetCore.Model {
+    public interface IClient {
         string ID { get; set; }
         string Secret { get; set; }
         int AccessTokenExpireSeconds { get; set; }
         int RefreshTokenExpireSeconds { get; set; }
+        int? Flags { get; set; }
         IList<string> Grants { get; set; }
         IList<string> Audiences { get; set; }
         IList<string> Scopes { get; set; }
