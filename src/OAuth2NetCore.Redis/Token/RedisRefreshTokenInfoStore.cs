@@ -7,27 +7,27 @@ using System.Threading.Tasks;
 
 namespace OAuth2NetCore.Redis.Token
 {
-    public class RedisTokenInfoStore : RedisStore, ITokenInfoStore
+    public class RedisRefreshTokenInfoStore : RedisStore, IRefreshTokenInfoStore
     {
         private readonly string _prefix;
         private readonly ISecretEncryptor _secertEncryptor;
 
-        public RedisTokenInfoStore(string connStr, int db = 0, string prefix = "rt:", ISecretEncryptor secretEncryptor = null)
+        public RedisRefreshTokenInfoStore(string connStr, int db = 0, string prefix = "rt:", ISecretEncryptor secretEncryptor = null)
             : base(connStr, db)
         {
             _prefix = prefix;
             _secertEncryptor = secretEncryptor ?? new DefaultSecretEncryptor();
         }
 
-        public async Task SaveRefreshTokenAsync(string refreshToken, TokenInfo requestInfo, int expireSeconds)
+        public async Task SaveRefreshTokenAsync(string refreshToken, RefreshTokenInfo refreshTokenInfo, int expireSeconds)
         {
-            var json = JsonSerializer.Serialize(requestInfo);
+            var json = JsonSerializer.Serialize(refreshTokenInfo);
             json = _secertEncryptor.Encrypt(json);
             await Database.StringSetAsync(_prefix + refreshToken, json, expiry: TimeSpan.FromSeconds(expireSeconds));
 
         }
 
-        public async Task<TokenInfo> GetThenRemoveTokenInfoAsync(string refreshToken)
+        public async Task<RefreshTokenInfo> GetThenRemoveTokenInfoAsync(string refreshToken)
         {
             var json = await Database.StringGetAsync(_prefix + refreshToken);
             if (!string.IsNullOrWhiteSpace(json))
@@ -35,7 +35,7 @@ namespace OAuth2NetCore.Redis.Token
                 if (_secertEncryptor.TryDecrypt(json, out var decryptedJson))
                 {
                     json = decryptedJson;
-                    var r = JsonSerializer.Deserialize<TokenInfo>(json);
+                    var r = JsonSerializer.Deserialize<RefreshTokenInfo>(json);
                     await RemoveRefreshTokenAsync(refreshToken);    // remove refresh token after using
                     return r;
                 }

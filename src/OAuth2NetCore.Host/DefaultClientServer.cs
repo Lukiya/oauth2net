@@ -16,7 +16,7 @@ namespace OAuth2NetCore.Host
     {
         private readonly IStateStore _stateStore;
         private readonly IStateGenerator _stateGenerator;
-        private readonly ITokenDTOStore _tokenDTOStore;
+        private readonly ITokenStore _tokenDTOStore;
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly ILogger<DefaultClientServer> _logger;
         private readonly ClientOptions _options;
@@ -25,7 +25,7 @@ namespace OAuth2NetCore.Host
 
         public DefaultClientServer(
             IStateStore stateStore
-            , ITokenDTOStore tokenDTOStore
+            , ITokenStore tokenDTOStore
             , IStateGenerator stateGenerator
             , IHttpClientFactory httpClientFactory
             , ILogger<DefaultClientServer> logger

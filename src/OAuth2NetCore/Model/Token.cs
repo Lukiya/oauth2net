@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace OAuth2NetCore.Model
 {
-    public class TokenDTO
+    public class Token
     {
         private readonly object _locker = new object();
         private volatile JsonWebToken _jwt;

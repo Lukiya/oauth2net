@@ -28,17 +28,17 @@ namespace Microsoft.Extensions.DependencyInjection {
 
             services.AddHttpClient();
             services.AddHttpContextAccessor();
-            services.AddTransient<IDataSerializer<TokenDTO>, JsonDataSerializer<TokenDTO>>();
-            services.AddTransient<ISecureDataFormat<TokenDTO>, SecureDataFormat<TokenDTO>>();
+            services.AddTransient<IDataSerializer<Token>, JsonDataSerializer<Token>>();
+            services.AddTransient<ISecureDataFormat<Token>, SecureDataFormat<Token>>();
             services.AddTransient(c => {
                 var dpp = c.GetService<IDataProtectionProvider>();
-                return dpp.CreateProtector(nameof(TokenDTO));
+                return dpp.CreateProtector(nameof(Token));
             });
-            services.AddTransient<ITokenDTOStore, HttpContextTokenDTOStore>();
+            services.AddTransient<ITokenStore, HttpContextTokenStore>();
 
             var sp = services.BuildServiceProvider();
             var httpClientFactory = sp.GetService<IHttpClientFactory>();
-            var tokenDTOStore = sp.GetService<ITokenDTOStore>();
+            var tokenDTOStore = sp.GetService<ITokenStore>();
 
             services.AddAuthentication(authOptions => {
                 authOptions.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
@@ -79,10 +79,19 @@ namespace Microsoft.Extensions.DependencyInjection {
                         o.Events.OnCreatingTicket = options.OnCreatingTicket;
                     } else {
                         o.Events.OnCreatingTicket = async context => {
+                            var json = context.TokenResponse.Response.ToJsonString();
+                            var tokenDTO = JsonSerializer.Deserialize<Token>(json);
+
+                            if (options.PreCreatingTicket != null) {
+                                var canContinue = await options.PreCreatingTicket?.Invoke(context, tokenDTO);
+                                if (!canContinue) return;
+                                // ^^^^^^^^^^
+                            }
+
                             context.Principal = new ClaimsPrincipal(new ClaimsIdentity(OAuthDefaults.DisplayName, OAuth2Consts.Claim_Name, OAuth2Consts.Claim_Role));
 
                             // Save token to cookie, and return a json web token
-                            var jwt = await tokenDTOStore.SaveTokenDTOAsync(context.TokenResponse.Response.ToJsonString());
+                            var jwt = await tokenDTOStore.SaveTokenDTOAsync(tokenDTO);
                             if (jwt != null) {
                                 var claims = await options.IdentityClaimsBuilder(jwt);
                                 foreach (var claim in claims) {
@@ -105,7 +114,7 @@ namespace Microsoft.Extensions.DependencyInjection {
             return services;
         }
 
-        private static async Task ValidatePrincipal(CookieValidatePrincipalContext context, IHttpClientFactory httpClientFactory, ITokenDTOStore tokenDTOStore, ClientOptions options) {
+        private static async Task ValidatePrincipal(CookieValidatePrincipalContext context, IHttpClientFactory httpClientFactory, ITokenStore tokenDTOStore, ClientOptions options) {
             var tokenDTO = await tokenDTOStore.GetTokenDTOAsync();
             var jwt = tokenDTO.GetJwt();
 

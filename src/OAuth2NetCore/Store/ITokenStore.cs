@@ -4,9 +4,10 @@ using System.Threading.Tasks;
 
 namespace OAuth2NetCore.Store
 {
-    public interface ITokenDTOStore
+    public interface ITokenStore
     {
+        Task<JsonWebToken> SaveTokenDTOAsync(Model.Token tokenDTO);
         Task<JsonWebToken> SaveTokenDTOAsync(string json);
-        Task<TokenDTO> GetTokenDTOAsync();
+        Task<Model.Token> GetTokenDTOAsync();
     }
 }

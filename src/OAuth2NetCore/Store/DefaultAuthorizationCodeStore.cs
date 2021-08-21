@@ -5,15 +5,15 @@ namespace OAuth2NetCore.Store
 {
     public class DefaultAuthCodeStore : IAuthCodeStore
     {
-        static AutoCleanDictionary<string, TokenInfo> _dic = new AutoCleanDictionary<string, TokenInfo>(60, 60);
+        static AutoCleanDictionary<string, RefreshTokenInfo> _dic = new AutoCleanDictionary<string, RefreshTokenInfo>(60, 60);
 
-        public Task SaveAsync(string code, TokenInfo requestInfo)
+        public Task SaveAsync(string code, RefreshTokenInfo requestInfo)
         {
             _dic.TryAdd(code, requestInfo);
             return Task.CompletedTask;
         }
 
-        public Task<TokenInfo> GetThenRemoveAsync(string code)
+        public Task<RefreshTokenInfo> GetThenRemoveAsync(string code)
         {
             _dic.TryRemove(code, out var o);
             return Task.FromResult(o);

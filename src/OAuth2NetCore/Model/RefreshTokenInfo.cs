@@ -2,7 +2,7 @@
 
 namespace OAuth2NetCore.Model
 {
-    public class TokenInfo
+    public class RefreshTokenInfo
     {
         /// <summary>
         /// ClientID

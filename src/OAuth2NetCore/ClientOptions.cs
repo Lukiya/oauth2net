@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.IdentityModel.JsonWebTokens;
+using OAuth2NetCore.Model;
 using OAuth2NetCore.Security;
 using OAuth2NetCore.Store;
 using System;
@@ -102,5 +103,10 @@ namespace OAuth2NetCore {
 
             return Task.FromResult<IEnumerable<Claim>>(r);
         }
+
+        /// <summary>
+        /// Optional
+        /// </summary>
+        public Func<OAuthCreatingTicketContext, Model.Token, Task<bool>> PreCreatingTicket { get; set; }
     }
 }

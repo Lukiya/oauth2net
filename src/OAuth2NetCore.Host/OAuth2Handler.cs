@@ -17,9 +17,9 @@ namespace Microsoft.Extensions.DependencyInjection
 {
     public class OAuth2Handler : OAuthHandler<OAuthOptions>
     {
-        private readonly ITokenDTOStore _tokenDTOStore;
+        private readonly ITokenStore _tokenDTOStore;
 
-        public OAuth2Handler(IOptionsMonitor<OAuthOptions> options, ILoggerFactory logger, UrlEncoder encoder, ISystemClock clock, ITokenDTOStore tokenDTOStore)
+        public OAuth2Handler(IOptionsMonitor<OAuthOptions> options, ILoggerFactory logger, UrlEncoder encoder, ISystemClock clock, ITokenStore tokenDTOStore)
             : base(options, logger, encoder, clock)
         {
             _tokenDTOStore = tokenDTOStore;

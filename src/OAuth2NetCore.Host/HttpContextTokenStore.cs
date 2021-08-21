@@ -2,19 +2,18 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.JsonWebTokens;
-using OAuth2NetCore.Model;
 using OAuth2NetCore.Store;
 using System;
 using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace OAuth2NetCore.Host {
-    internal class HttpContextTokenDTOStore : ITokenDTOStore {
-        private readonly ILogger<HttpContextTokenDTOStore> _logger;
+    internal class HttpContextTokenStore : ITokenStore {
+        private readonly ILogger<HttpContextTokenStore> _logger;
         private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly ISecureDataFormat<TokenDTO> _tokenDTOProector;
+        private readonly ISecureDataFormat<Model.Token> _tokenDTOProector;
 
-        public HttpContextTokenDTOStore(IHttpContextAccessor httpContextAccessor, ISecureDataFormat<TokenDTO> tokenDTOProector, ILogger<HttpContextTokenDTOStore> logger) {
+        public HttpContextTokenStore(IHttpContextAccessor httpContextAccessor, ISecureDataFormat<Model.Token> tokenDTOProector, ILogger<HttpContextTokenStore> logger) {
             _logger = logger;
             _httpContextAccessor = httpContextAccessor;
             _tokenDTOProector = tokenDTOProector;
@@ -22,9 +21,16 @@ namespace OAuth2NetCore.Host {
 
         public Task<JsonWebToken> SaveTokenDTOAsync(string json) {
             if (_httpContextAccessor.HttpContext != null) {
-                //var json = jsonDoc.ToJsonString();
-                var tokenDTO = JsonSerializer.Deserialize<TokenDTO>(json);
+                var tokenDTO = JsonSerializer.Deserialize<Model.Token>(json);
+                return SaveTokenDTOAsync(tokenDTO);
+            }
 
+            _logger.LogWarning($"{nameof(_httpContextAccessor)}.{_httpContextAccessor.HttpContext} is null");
+            return Task.FromResult<JsonWebToken>(null);
+        }
+
+        public Task<JsonWebToken> SaveTokenDTOAsync(Model.Token tokenDTO) {
+            if (_httpContextAccessor.HttpContext != null) {
                 var cookieOptions = new CookieOptions();
 
                 var jwt = tokenDTO.GetJwt();
@@ -40,11 +46,11 @@ namespace OAuth2NetCore.Host {
             return Task.FromResult<JsonWebToken>(null);
         }
 
-        public Task<TokenDTO> GetTokenDTOAsync() {
+        public Task<Model.Token> GetTokenDTOAsync() {
             if (_httpContextAccessor.HttpContext != null) {
                 var protectedText = _httpContextAccessor.HttpContext.Request.Cookies[OAuth2Consts.Cookie_TokenDTO];
                 if (string.IsNullOrWhiteSpace(protectedText))
-                    return Task.FromResult<TokenDTO>(null);
+                    return Task.FromResult<Model.Token>(null);
 
                 var tokenDTO = _tokenDTOProector.Unprotect(protectedText);
 
@@ -52,7 +58,7 @@ namespace OAuth2NetCore.Host {
             }
 
             _logger.LogWarning($"{nameof(_httpContextAccessor)}.{_httpContextAccessor.HttpContext} is null");
-            return Task.FromResult<TokenDTO>(null);
+            return Task.FromResult<Model.Token>(null);
         }
     }
 }

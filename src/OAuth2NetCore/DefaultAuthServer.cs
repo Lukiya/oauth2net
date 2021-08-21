@@ -18,7 +18,7 @@ namespace OAuth2NetCore
         private readonly IClientValidator _clientValidator;
         private readonly ITokenGenerator _tokenGenerator;
         private readonly IAuthCodeStore _authCodeStore;
-        private readonly ITokenInfoStore _tokenStore;
+        private readonly IRefreshTokenInfoStore _tokenStore;
         private readonly IStateStore _stateStore;
         private readonly IAuthCodeGenerator _authCodeGenerator;
         private readonly IResourceOwnerValidator _resourceOwnerValidator;
@@ -37,7 +37,7 @@ namespace OAuth2NetCore
               IClientValidator clientValidator
             , ITokenGenerator tokenGenerator
             , IAuthCodeStore authCodeStore
-            , ITokenInfoStore tokenStore
+            , IRefreshTokenInfoStore tokenStore
             , IStateStore stateStore
             , IAuthCodeGenerator authCodeGenerator
             , IResourceOwnerValidator resourceOwnerValidator
@@ -142,7 +142,7 @@ namespace OAuth2NetCore
                 // pkce not required, just issue code
                 code = await _authCodeGenerator.GenerateAsync();
                 await _authCodeStore.SaveAsync(code,
-                    new TokenInfo
+                    new RefreshTokenInfo
                     {
                         ClientID = client.ID,
                         Scopes = scopesStr,
@@ -177,7 +177,7 @@ namespace OAuth2NetCore
             // issue code with chanllenge
             code = await _authCodeGenerator.GenerateAsync();
             await _authCodeStore.SaveAsync(code,
-                new TokenInfo
+                new RefreshTokenInfo
                 {
                     ClientID = client.ID,
                     Scopes = scopesStr,
@@ -444,7 +444,7 @@ namespace OAuth2NetCore
             var success = await _resourceOwnerValidator.VerifyAsync(username, password);
             if (success)
             {// pass, issue token
-                await IssueTokenByRequestInfoAsync(context, GrantType.ResourceOwner, client, new TokenInfo
+                await IssueTokenByRequestInfoAsync(context, GrantType.ResourceOwner, client, new RefreshTokenInfo
                 {
                     ClientID = client.ID,
                     Scopes = scopesStr,
@@ -493,7 +493,7 @@ namespace OAuth2NetCore
         /// <summary>
         /// issue access token and refresh token
         /// </summary>
-        protected virtual async Task IssueTokenByRequestInfoAsync(HttpContext context, GrantType grantType, IClient client, TokenInfo tokenRequestInfo)
+        protected virtual async Task IssueTokenByRequestInfoAsync(HttpContext context, GrantType grantType, IClient client, RefreshTokenInfo tokenRequestInfo)
         {
             // issue token
             var token = await _tokenGenerator.GenerateAccessTokenAsync(
@@ -558,7 +558,7 @@ namespace OAuth2NetCore
         /// </summary>
         protected virtual string GenereateTokenJson(string token, string scopes, IClient client)
         {
-            var tokenDTO = new TokenDTO
+            var tokenDTO = new Model.Token
             {
                 TokenType = OAuth2Consts.Token_Type_Bearer,
                 AccessToken = token,
@@ -573,7 +573,7 @@ namespace OAuth2NetCore
         /// </summary>
         protected virtual string GenereateTokenJson(string token, string refreshToken, string scopes, IClient client)
         {
-            var tokenDTO = new TokenDTO
+            var tokenDTO = new Model.Token
             {
                 TokenType = OAuth2Consts.Token_Type_Bearer,
                 AccessToken = token,
