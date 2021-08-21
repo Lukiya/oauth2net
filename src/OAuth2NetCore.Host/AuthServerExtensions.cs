@@ -93,11 +93,11 @@ namespace Microsoft.Extensions.DependencyInjection
                 throw new ArgumentNullException($"{nameof(options)}.{nameof(options.ClientStoreFactory)}");
 
             // TokenStore
-            if (options.TokenStoreFactory != null)
-                services.AddSingleton(options.TokenStoreFactory);
+            if (options.RefreshTokenInfoStore != null)
+                services.AddSingleton(options.RefreshTokenInfoStore);
             else
                 // no default, must provde
-                throw new ArgumentNullException($"{nameof(options)}.{nameof(options.TokenStoreFactory)}");
+                throw new ArgumentNullException($"{nameof(options)}.{nameof(options.RefreshTokenInfoStore)}");
 
             // TokenStore
             if (options.StateStoreFactory != null)

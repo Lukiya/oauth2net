@@ -12,9 +12,9 @@ namespace client.Controllers
 {
     public class HomeController : Controller
     {
-        private readonly ITokenDTOStore _tokenDTOStore;
+        private readonly ITokenStore _tokenDTOStore;
 
-        public HomeController(ITokenDTOStore tokenDTOStore)
+        public HomeController(ITokenStore tokenDTOStore)
         {
             _tokenDTOStore = tokenDTOStore;
         }
