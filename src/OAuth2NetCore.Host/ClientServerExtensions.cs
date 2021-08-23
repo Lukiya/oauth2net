@@ -59,8 +59,10 @@ namespace Microsoft.Extensions.DependencyInjection {
                     }
                 })
                 .AddOAuth<OAuthOptions, OAuth2Handler>(OAuthDefaults.DisplayName, o => {
-                    foreach (var scope in options.Scopes) {
-                        o.Scope.Add(scope);
+                    if (options.Scopes != null) {
+                        foreach (var scope in options.Scopes) {
+                            o.Scope.Add(scope);
+                        }
                     }
                     o.ClientId = options.ClientID;
                     o.ClientSecret = options.ClientSecret;
