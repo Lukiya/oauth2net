@@ -6,7 +6,7 @@ namespace OAuth2NetCore.Redis.State {
     public class RedisStateStore : RedisStore, IStateStore {
         private readonly string _prefix;
 
-        public RedisStateStore(string connStr, int db = 0, string prefix = "st:")
+        public RedisStateStore(string connStr, int db = -1, string prefix = "st:")
             : base(connStr, db) {
             _prefix = prefix;
         }
