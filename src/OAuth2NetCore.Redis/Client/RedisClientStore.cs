@@ -14,7 +14,7 @@ namespace OAuth2NetCore.Redis.Client
         private readonly string _key;
         private readonly ISecretEncryptor _secertEncryptor;
 
-        public RedisClientStore(string connStr, string key, int db = 0, ISecretEncryptor secretEncryptor = null)
+        public RedisClientStore(string connStr, string key, int db = -1, ISecretEncryptor secretEncryptor = null)
             : base(connStr, db)
         {
             _key = key;
