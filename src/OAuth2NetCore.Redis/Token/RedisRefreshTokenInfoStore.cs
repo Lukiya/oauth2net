@@ -12,7 +12,7 @@ namespace OAuth2NetCore.Redis.Token
         private readonly string _prefix;
         private readonly ISecretEncryptor _secertEncryptor;
 
-        public RedisRefreshTokenInfoStore(string connStr, int db = 0, string prefix = "rt:", ISecretEncryptor secretEncryptor = null)
+        public RedisRefreshTokenInfoStore(string connStr, int db = -1, string prefix = "rt:", ISecretEncryptor secretEncryptor = null)
             : base(connStr, db)
         {
             _prefix = prefix;
