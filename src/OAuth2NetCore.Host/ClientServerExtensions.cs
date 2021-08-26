@@ -105,6 +105,14 @@ namespace Microsoft.Extensions.DependencyInjection {
                     // OnRedirectToAuthorizationEndpoint
                     if (options.OnRedirectToAuthorizationEndpoint != null)
                         o.Events.OnRedirectToAuthorizationEndpoint = options.OnRedirectToAuthorizationEndpoint;
+                    else
+                        o.Events.OnRedirectToAuthorizationEndpoint = (ctx) => {
+                            if (ctx.Properties.Parameters.ContainsKey("t")) {   // Login token RL: {1BC05F9A-1971-418B-ABA7-6C623C008D85}
+                                ctx.RedirectUri += "&t=" + ctx.Properties.Parameters["t"];
+                            }
+                            ctx.Response.Redirect(ctx.RedirectUri);
+                            return Task.CompletedTask;
+                        };
                     // OnRemoteFailure
                     if (options.OnRemoteFailure != null)
                         o.Events.OnRemoteFailure = options.OnRemoteFailure;

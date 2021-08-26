@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using OAuth2NetCore.Security;
@@ -107,6 +108,17 @@ namespace OAuth2NetCore.Host
             }
 
             context.Response.StatusCode = (int)HttpStatusCode.NotFound;
+        }
+
+        protected virtual async Task SignInRequestHandler(HttpContext context) {
+            var returnUrl = context.Request.Query["returnUrl"];
+            var t = context.Request.Query["t"];
+            var authProps = new AuthenticationProperties();
+            if (!string.IsNullOrWhiteSpace(t)) {
+                authProps.SetParameter("t", t); // Set login token: {1BC05F9A-1971-418B-ABA7-6C623C008D85}
+            }
+            authProps.RedirectUri = returnUrl;
+            await context.ChallengeAsync(OAuthDefaults.DisplayName, authProps);
         }
     }
 }
