@@ -21,6 +21,7 @@ namespace OAuth2NetCore.Host
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly ILogger<DefaultClientServer> _logger;
         private readonly ClientOptions _options;
+        public RequestDelegate SignInRequestHandler { get; }
         public RequestDelegate SignOutRequestHandler { get; }
         public RequestDelegate SignOutCallbackRequestHandler { get; }
 
@@ -40,6 +41,7 @@ namespace OAuth2NetCore.Host
             _logger = logger;
             _options = options;
 
+            SignInRequestHandler = HandleSignInRequestAsync;
             SignOutRequestHandler = HandleSignOutRequestAsync;
             SignOutCallbackRequestHandler = HandleSignOutCallbackRequestAsync;
         }
@@ -110,7 +112,7 @@ namespace OAuth2NetCore.Host
             context.Response.StatusCode = (int)HttpStatusCode.NotFound;
         }
 
-        protected virtual async Task SignInRequestHandler(HttpContext context) {
+        protected virtual async Task HandleSignInRequestAsync(HttpContext context) {
             var returnUrl = context.Request.Query["returnUrl"];
             var t = context.Request.Query["t"];
             var authProps = new AuthenticationProperties();
