@@ -34,7 +34,7 @@ namespace OAuth2NetCore {
         /// <summary>
         /// Required (has default)
         /// </summary>
-        public string SignInPath { get; set; } = "/sign";
+        public string SignInPath { get; set; } = "/signin";
         /// <summary>
         /// Required (has default)
         /// </summary>
