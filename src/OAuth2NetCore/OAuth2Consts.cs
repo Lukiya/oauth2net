@@ -1,7 +1,5 @@
-﻿namespace OAuth2NetCore
-{
-    public static class OAuth2Consts
-    {
+﻿namespace OAuth2NetCore {
+    public static class OAuth2Consts {
         public const string Header_Authorization = "Authorization";
         public const string Header_CacheControl = "Cache-Control";
         public const string Header_CacheControl_Value = "no-store";
@@ -14,6 +12,8 @@
         public const string Claim_Issuer = "iss";
         public const string Claim_AccessTokenExpire = "exp";
         public const string Claim_RefreshTokenExpire = "rexp";
+        public const string Claim_Scope = "scope";
+        public const string Claim_ClienID = "client_id";
         public const string Form_GrantType = "grant_type";
         public const string Form_ClientID = "client_id";
         public const string Form_ClientSecret = "client_secret";
