@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using OAuth2NetCore.Model;
 using OAuth2NetCore.Security;
 using OAuth2NetCore.Store;
@@ -8,7 +9,7 @@ using OAuth2NetCore.Token;
 using System;
 using System.Linq;
 using System.Net;
-using System.Text.Json;
+//using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace OAuth2NetCore {
@@ -22,7 +23,7 @@ namespace OAuth2NetCore {
         private readonly IResourceOwnerValidator _resourceOwnerValidator;
         private readonly ILogger<DefaultAuthServer> _logger;
         private readonly IPkceValidator _pkceValidator;
-        private readonly IWellknown _wellknownProvider;
+        private readonly IWellknown _wellknown;
 
         //private readonly IConfiguration _configuration;
         public RequestDelegate TokenRequestHandler { get; }
@@ -45,7 +46,7 @@ namespace OAuth2NetCore {
             , ILogger<DefaultAuthServer> logger
             , AuthServerOptions options
             , IPkceValidator pkceValidator
-            , IWellknown wellknownProvider
+            , IWellknown wellknown
         //, IConfiguration configuration
         ) {
             _clientValidator = clientValidator;
@@ -58,7 +59,7 @@ namespace OAuth2NetCore {
             _authCodeGenerator = authCodeGenerator;
             _pkceValidator = pkceValidator;
             //_configuration = configuration;
-            _wellknownProvider = wellknownProvider;
+            _wellknown = wellknown;
 
             TokenRequestHandler = HandleTokenRequestAsync;
             AuthorizeRequestHandler = HandleAuthorizeRequestAsync;
@@ -533,13 +534,13 @@ namespace OAuth2NetCore {
         /// <param name="context"></param>
         /// <returns></returns>
         private async Task HandleOpenIDConfigRequestAsync(HttpContext context) {
-            var openIDConfig = _wellknownProvider.GetOpenIDCOnfig();
+            var openIDConfig = _wellknown.GetOpenIDCOnfig();
             if (openIDConfig == null) {
                 context.Response.StatusCode = (int)HttpStatusCode.NotFound;
                 return;
             }
 
-            var json = JsonSerializer.Serialize(openIDConfig, new JsonSerializerOptions { DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull });
+            var json = JsonConvert.SerializeObject(openIDConfig, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
             await context.Response.WriteAsync(json);
         }
 
@@ -549,13 +550,13 @@ namespace OAuth2NetCore {
         /// <param name="context"></param>
         /// <returns></returns>
         private async Task HandleOpenIDJwksRequestAsync(HttpContext context) {
-            var jwk = _wellknownProvider.GetOpenIDJsonWebKey();
+            var jwk = _wellknown.GetOpenIDJsonWebKey();
             if (jwk == null) {
                 context.Response.StatusCode = (int)HttpStatusCode.NotFound;
                 return;
             }
 
-            var json = JsonSerializer.Serialize(jwk, new JsonSerializerOptions { DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull });
+            var json = JsonConvert.SerializeObject(jwk, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
             json = $"{{\"keys\":[{json}]}}";
 
             await context.Response.WriteAsync(json);

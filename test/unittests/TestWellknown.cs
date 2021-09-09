@@ -13,15 +13,6 @@ namespace auth2net {
         public OpenIDConfig GetOpenIDCOnfig() {
             return new OpenIDConfig {
                 issuer = "https://dp.syncecom.co",
-                jwks_uri = "https://dp.syncecom.co/.well-known/openid-configuration/jwks",
-                authorization_endpoint = "https://dp.syncecom.co/connect/authorize",
-                token_endpoint = "https://dp.syncecom.co/connect/token",
-                userinfo_endpoint = "https://dp.syncecom.co/connect/userinfo",
-                end_session_endpoint = "https://dp.syncecom.co/connect/endsession",
-                check_session_iframe = "https://dp.syncecom.co/connect/checksession",
-                revocation_endpoint = "https://dp.syncecom.co/connect/revocation",
-                introspection_endpoint = "https://dp.syncecom.co/connect/introspect",
-                device_authorization_endpoint = "https://dp.syncecom.co/connect/deviceauthorization",
                 frontchannel_logout_supported = true,
                 frontchannel_logout_session_supported = true,
                 backchannel_logout_supported = true,
