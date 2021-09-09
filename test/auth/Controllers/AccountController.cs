@@ -10,8 +10,7 @@ using System.Composition;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
-namespace auth.Controllers
-{
+namespace auth.Controllers {
     public class AccountController : Controller
     {
         // *******************************************************************************************************************************

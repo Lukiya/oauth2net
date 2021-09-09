@@ -2,8 +2,7 @@
 using OAuth2NetCore.Security;
 using System.Threading.Tasks;
 
-namespace auth
-{
+namespace auth {
     public class MyResourceOwnerValidator : IResourceOwnerValidator
     {
         private readonly IUserService _userService;

@@ -7,8 +7,7 @@ using System.Collections.Generic;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
-namespace auth
-{
+namespace auth {
     public class MyTokenClaimBuilder : ITokenClaimBuilder
     {
         public Task<IList<Claim>> GenerateAsync(HttpContext context, GrantType grantType, IClient client, string[] scopes, string username)

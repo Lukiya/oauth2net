@@ -1,5 +1,4 @@
-﻿namespace OAuth2NetCore
-{
+﻿namespace OAuth2NetCore {
     public enum GrantType
     {
         ClientCredentials,

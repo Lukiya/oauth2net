@@ -2,8 +2,7 @@
 using System.Text;
 using System.Text.Json.Serialization;
 
-namespace OAuth2NetCore.Model
-{
+namespace OAuth2NetCore.Model {
     public class Token
     {
         private readonly object _locker = new object();

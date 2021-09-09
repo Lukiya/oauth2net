@@ -3,8 +3,7 @@ using OAuth2NetCore.Model;
 using System.Net;
 using System.Threading.Tasks;
 
-namespace OAuth2NetCore.Security
-{
+namespace OAuth2NetCore.Security {
     public interface IClientValidator
     {
         MessageResult<NetworkCredential> ExractClientCredentials(HttpContext context);

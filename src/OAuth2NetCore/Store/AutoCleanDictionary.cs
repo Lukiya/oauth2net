@@ -3,8 +3,7 @@ using System.Collections.Concurrent;
 using System.Linq;
 using System.Timers;
 
-namespace OAuth2NetCore.Store
-{
+namespace OAuth2NetCore.Store {
     internal class AutoCleanDictionary<TKey, TValue>
     {
         private readonly ConcurrentDictionary<TKey, AutoCleanDictionaryPayload<TValue>> _dic = new ConcurrentDictionary<TKey, AutoCleanDictionaryPayload<TValue>>();

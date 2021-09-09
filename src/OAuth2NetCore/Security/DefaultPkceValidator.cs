@@ -1,5 +1,4 @@
-﻿namespace OAuth2NetCore.Security
-{
+﻿namespace OAuth2NetCore.Security {
     public class DefaultPkceValidator : IPkceValidator
     {
         public bool Verify(string codeVerifier, string codeChanllenge, string codeChanllengeMethod)

@@ -1,8 +1,7 @@
 ﻿using Microsoft.IdentityModel.Tokens;
 using OAuth2NetCore;
 
-namespace Microsoft.Extensions.DependencyInjection
-{
+namespace Microsoft.Extensions.DependencyInjection {
     public class ResourceOptions
     {
         public string NameClaimType { get; set; } = OAuth2Consts.Claim_Name;

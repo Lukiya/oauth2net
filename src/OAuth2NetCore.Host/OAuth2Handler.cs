@@ -13,8 +13,7 @@ using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace Microsoft.Extensions.DependencyInjection
-{
+namespace Microsoft.Extensions.DependencyInjection {
     public class OAuth2Handler : OAuthHandler<OAuthOptions>
     {
         private readonly ITokenStore _tokenDTOStore;

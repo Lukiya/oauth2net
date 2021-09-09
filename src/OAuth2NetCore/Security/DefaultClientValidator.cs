@@ -8,8 +8,7 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 
-namespace OAuth2NetCore.Security
-{
+namespace OAuth2NetCore.Security {
     public class DefaultClientValidator : IClientValidator
     {
         private readonly IClientStore _clientStore;

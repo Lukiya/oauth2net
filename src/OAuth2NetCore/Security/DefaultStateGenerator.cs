@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 
-namespace OAuth2NetCore.Security
-{
+namespace OAuth2NetCore.Security {
     public class DefaultStateGenerator : IStateGenerator
     {
         public Task<string> GenerateAsync()

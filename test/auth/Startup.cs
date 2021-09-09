@@ -14,8 +14,7 @@ using shared;
 using SimpleInjector;
 using System.Security.Cryptography.X509Certificates;
 
-namespace auth
-{
+namespace auth {
     public class Startup
     {
         static readonly Container _container = ContainerFactory.CreateWithPropertyInjection<ImportPropertySelectionBehavior>();

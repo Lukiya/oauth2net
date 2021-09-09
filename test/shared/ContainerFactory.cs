@@ -2,8 +2,7 @@
 using SimpleInjector.Advanced;
 using System;
 
-namespace shared
-{
+namespace shared {
     public static class ContainerFactory
     {
         public static Container CreateWithPropertyInjection<TPropertySelectionBehavior>()

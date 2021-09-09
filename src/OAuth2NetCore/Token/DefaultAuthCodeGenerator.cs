@@ -2,8 +2,7 @@
 using System.Security.Cryptography;
 using System.Threading.Tasks;
 
-namespace OAuth2NetCore.Token
-{
+namespace OAuth2NetCore.Token {
     public class DefaultAuthCodeGenerator : IAuthCodeGenerator
     {
         public Task<string> GenerateAsync()

@@ -5,8 +5,7 @@ using System;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace OAuth2NetCore.Redis.Token
-{
+namespace OAuth2NetCore.Redis.Token {
     public class RedisRefreshTokenInfoStore : RedisStore, IRefreshTokenInfoStore
     {
         private readonly string _prefix;

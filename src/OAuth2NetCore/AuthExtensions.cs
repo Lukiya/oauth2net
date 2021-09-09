@@ -2,8 +2,7 @@
 using OAuth2NetCore;
 using System.Threading.Tasks;
 
-namespace Microsoft.AspNetCore.Authentication
-{
+namespace Microsoft.AspNetCore.Authentication {
     public static class AuthExtensions
     {
         public static async Task OAuth2SignOutAsync(this HttpContext httpContext)

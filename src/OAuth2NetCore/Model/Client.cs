@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 
-namespace OAuth2NetCore.Model
-{
+namespace OAuth2NetCore.Model {
     public class Client : IClient
     {
         public string ID { get; set; }

@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 
-namespace OAuth2NetCore
-{
+namespace OAuth2NetCore {
     public interface IClientServer
     {
         RequestDelegate SignInRequestHandler { get; }

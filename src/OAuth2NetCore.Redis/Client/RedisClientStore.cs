@@ -7,8 +7,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace OAuth2NetCore.Redis.Client
-{
+namespace OAuth2NetCore.Redis.Client {
     public class RedisClientStore : RedisStore, IClientStore
     {
         private readonly string _key;

@@ -3,8 +3,7 @@ using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 
-namespace OAuth2NetCore.Security
-{
+namespace OAuth2NetCore.Security {
     /// <summary>
     /// has secret length limit, it depends on your certificate length
     /// </summary>

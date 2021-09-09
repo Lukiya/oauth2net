@@ -4,12 +4,9 @@ using OAuth2NetCore.Store;
 using OAuth2NetCore.Token;
 using System;
 
-namespace Microsoft.Extensions.DependencyInjection
-{
-    public static class AuthServerExtensions
-    {
-        public static IServiceCollection AddOAuth2AuthServer(this IServiceCollection services, Action<AuthServerOptions> configOptions, AuthServerOptions options = null)
-        {
+namespace Microsoft.Extensions.DependencyInjection {
+    public static class AuthServerExtensions {
+        public static IServiceCollection AddOAuth2AuthServer(this IServiceCollection services, Action<AuthServerOptions> configOptions, AuthServerOptions options = null) {
             options = options ?? new AuthServerOptions();
 
             configOptions(options);
@@ -21,8 +18,7 @@ namespace Microsoft.Extensions.DependencyInjection
             return services;
         }
 
-        private static void CheckOptions(IServiceCollection services, AuthServerOptions options)
-        {
+        private static void CheckOptions(IServiceCollection services, AuthServerOptions options) {
             // AuthServer
             if (options.AuthServerFactory != null)
                 services.AddSingleton(options.AuthServerFactory);
@@ -70,6 +66,13 @@ namespace Microsoft.Extensions.DependencyInjection
             else
                 // use default
                 services.AddSingleton<IPkceValidator, DefaultPkceValidator>();
+
+            // Wellknown open id config
+            if (options.WellknownFactory != null)
+                services.AddSingleton(options.WellknownFactory);
+            else
+                // no default, must provde
+                services.AddSingleton<IWellknown, DefaultWellknown>();
 
             // ClaimGenerator
             if (options.TokenClaimBuilderFactory != null)

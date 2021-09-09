@@ -1,7 +1,6 @@
 ﻿using System.Threading.Tasks;
 
-namespace OAuth2NetCore.Store
-{
+namespace OAuth2NetCore.Store {
     public interface IStateStore
     {
         Task SaveAsync(string key, string value, int expireSeconds = 60);

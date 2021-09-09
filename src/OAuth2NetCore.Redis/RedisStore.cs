@@ -1,8 +1,7 @@
 ﻿using StackExchange.Redis;
 using System;
 
-namespace OAuth2NetCore.Redis
-{
+namespace OAuth2NetCore.Redis {
     public abstract class RedisStore
     {
         private readonly Lazy<IDatabase> _lazyDatabase;

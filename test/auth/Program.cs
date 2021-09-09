@@ -4,8 +4,7 @@ using Serilog;
 using Serilog.Events;
 using System;
 
-namespace auth
-{
+namespace auth {
     public class Program
     {
         public static void Main(string[] args)

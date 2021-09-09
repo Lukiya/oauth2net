@@ -1,8 +1,7 @@
 ﻿using OAuth2NetCore.Model;
 using System.Threading.Tasks;
 
-namespace OAuth2NetCore.Store
-{
+namespace OAuth2NetCore.Store {
     public class DefaultAuthCodeStore : IAuthCodeStore
     {
         static AutoCleanDictionary<string, RefreshTokenInfo> _dic = new AutoCleanDictionary<string, RefreshTokenInfo>(60, 60);

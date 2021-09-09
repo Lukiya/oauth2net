@@ -8,8 +8,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
 
-namespace client.Controllers
-{
+namespace client.Controllers {
     public class HomeController : Controller
     {
         private readonly ITokenStore _tokenDTOStore;

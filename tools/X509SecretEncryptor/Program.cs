@@ -3,8 +3,7 @@ using OAuth2NetCore.Security;
 using System;
 
 
-namespace encryptor
-{
+namespace encryptor {
     class Program
     {
         static void Main(string[] args)

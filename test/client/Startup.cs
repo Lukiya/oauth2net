@@ -3,14 +3,10 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.IdentityModel.JsonWebTokens;
 using OAuth2NetCore;
 using OAuth2NetCore.Redis.State;
 using shared;
 using SimpleInjector;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Security.Claims;
 
 namespace client {
     public class Startup {

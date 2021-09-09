@@ -1,7 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace OAuth2NetCore.Model
-{
+namespace OAuth2NetCore.Model {
     public class RefreshTokenInfo
     {
         /// <summary>

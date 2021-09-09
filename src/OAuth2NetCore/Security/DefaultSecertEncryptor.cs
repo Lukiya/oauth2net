@@ -1,5 +1,4 @@
-﻿namespace OAuth2NetCore.Security
-{
+﻿namespace OAuth2NetCore.Security {
     /// <summary>
     /// no ecryption, it is not recommanded to use this implementation
     /// </summary>

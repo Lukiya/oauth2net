@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.IdentityModel.JsonWebTokens;
-using OAuth2NetCore.Model;
 using OAuth2NetCore.Security;
 using OAuth2NetCore.Store;
 using System;

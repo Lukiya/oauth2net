@@ -4,8 +4,7 @@ using System.Composition;
 using System.Linq;
 using System.Reflection;
 
-namespace shared
-{
+namespace shared {
     public class ImportPropertySelectionBehavior : IPropertySelectionBehavior
     {
         public bool SelectProperty(Type implementationType, PropertyInfo prop) =>

@@ -2,8 +2,7 @@
 using OAuth2NetCore.Model;
 using System.Threading.Tasks;
 
-namespace OAuth2NetCore.Token
-{
+namespace OAuth2NetCore.Token {
     public interface ITokenGenerator
     {
         Task<string> GenerateAccessTokenAsync(HttpContext context, GrantType grantType, IClient client, string[] scopes, string username);

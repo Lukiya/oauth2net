@@ -2,8 +2,7 @@
 using System.Security.Cryptography;
 using System.Text;
 
-namespace OAuth2NetCore
-{
+namespace OAuth2NetCore {
     public static class OAuth2Utils
     {
         public static string ToSHA256Base64URL(string str)

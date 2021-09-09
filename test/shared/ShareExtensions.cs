@@ -3,8 +3,7 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 
-namespace shared
-{
+namespace shared {
     public static class ShareExtensions
     {
         public static IServiceCollection AddLazySingleton<TService, TImplementation>(this IServiceCollection services)

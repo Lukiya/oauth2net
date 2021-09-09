@@ -1,7 +1,6 @@
 ﻿using System.Threading.Tasks;
 
-namespace OAuth2NetCore.Token
-{
+namespace OAuth2NetCore.Token {
     public interface IAuthCodeGenerator
     {
         Task<string> GenerateAsync();

@@ -11,8 +11,7 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 
-namespace OAuth2NetCore.Host
-{
+namespace OAuth2NetCore.Host {
     public class DefaultClientServer : IClientServer
     {
         private readonly IStateStore _stateStore;

@@ -4,10 +4,8 @@ using OAuth2NetCore.Store;
 using OAuth2NetCore.Token;
 using System;
 
-namespace OAuth2NetCore
-{
-    public class AuthServerOptions
-    {
+namespace OAuth2NetCore {
+    public class AuthServerOptions {
         /// <summary>
         /// Required (has default)
         /// </summary>
@@ -40,6 +38,11 @@ namespace OAuth2NetCore
         /// Required
         /// </summary>
         public Func<IServiceProvider, IStateStore> StateStoreFactory { get; set; }
+        /// <summary>
+        /// Required
+        /// </summary>
+        public Func<IServiceProvider, IWellknown> WellknownFactory { get; set; }
+
 
         /// <summary>
         /// Optional

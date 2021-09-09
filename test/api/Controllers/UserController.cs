@@ -5,8 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace api.Controllers
-{
+namespace api.Controllers {
     [ApiController]
     [Authorize]
     public class UserController : ControllerBase

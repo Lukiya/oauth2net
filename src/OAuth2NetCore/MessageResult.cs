@@ -1,5 +1,4 @@
-﻿namespace OAuth2NetCore
-{
+﻿namespace OAuth2NetCore {
     public class MessageResult<T>
     {
         public string MsgCode { get; set; } = OAuth2Consts.Msg_Success;

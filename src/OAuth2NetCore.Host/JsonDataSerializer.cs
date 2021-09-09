@@ -2,8 +2,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 
-namespace Microsoft.Extensions.DependencyInjection
-{
+namespace Microsoft.Extensions.DependencyInjection {
     internal class JsonDataSerializer<T> : IDataSerializer<T>
         where T : class
     {
