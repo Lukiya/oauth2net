@@ -44,7 +44,7 @@ namespace auth {
                 options.RefreshTokenInfoStore = _ => new RedisRefreshTokenInfoStore(rediConnStr, secretEncryptor: new X509SecretEncryptor(cert));
                 options.SecurityKeyProviderFactory = _ => new X509SecurityKeyProvider(cert);
                 options.StateStoreFactory = _ => new RedisStateStore(rediConnStr, prefix: "ecst:");
-                options.ClientStoreFactory = _ => new RedisClientStore(rediConnStr, "ec:CLIENTS", secretEncryptor: new X509SecretEncryptor(cert));
+                options.ClientStoreFactory = _ => new RedisClientStore(rediConnStr, "t:CLIENTS", secretEncryptor: new X509SecretEncryptor(cert));
                 options.TokenClaimBuilderFactory = _ => new MyTokenClaimBuilder();
                 options.ResourceOwnerValidatorFactory = sp =>
                 {

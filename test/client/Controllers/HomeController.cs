@@ -36,7 +36,7 @@ namespace client.Controllers {
         {
             var token = await _tokenDTOStore.GetTokenDTOAsync();
             var client = new HttpClient();
-            var request = new HttpRequestMessage(HttpMethod.Get, new Uri("https://di.test.com/users"));
+            var request = new HttpRequestMessage(HttpMethod.Get, new Uri("https://di.syncecom.co/users"));
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token.AccessToken);
             var resp = await client.SendAsync(request);
             var rs = await resp.Content.ReadAsStringAsync();
