@@ -8,6 +8,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Update="SimpleInjector.Integration.AspNetCore.Mvc.Core" Version="5.3.0" />
+      <PackageReference Update="SimpleInjector.Integration.AspNetCore.Mvc.Core" Version="5.4.0" />
     </ItemGroup>
 </Project>

@@ -2,6 +2,7 @@ using auth.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -15,11 +16,9 @@ using SimpleInjector;
 using System.Security.Cryptography.X509Certificates;
 
 namespace auth {
-    public class Startup
-    {
+    public class Startup {
         static readonly Container _container = ContainerFactory.CreateWithPropertyInjection<ImportPropertySelectionBehavior>();
-        public Startup(IConfiguration configuration, IWebHostEnvironment env)
-        {
+        public Startup(IConfiguration configuration, IWebHostEnvironment env) {
             Configuration = configuration;
             HostEnvironment = env;
         }
@@ -27,8 +26,7 @@ namespace auth {
         public IConfiguration Configuration { get; }
         public IWebHostEnvironment HostEnvironment { get; }
 
-        public void ConfigureServices(IServiceCollection services)
-        {
+        public void ConfigureServices(IServiceCollection services) {
             var rediConnStr = Configuration.GetConnectionString("Redis");
             var certPath = Configuration.GetValue<string>("CertPath");
             var certPass = Configuration.GetValue<string>("CertPass");
@@ -37,24 +35,23 @@ namespace auth {
             services.AddControllersWithViews();
 
             services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-                .AddCookie();
+                .AddCookie(o => {
+                    o.Cookie.SameSite = SameSiteMode.None;  // 解决iFrame无法设置Cookie问题, RL {3A012FF7-DB5F-4688-8575-B499F51FF4A5}
+                });
 
-            services.AddOAuth2AuthServer(options =>
-            {
+            services.AddOAuth2AuthServer(options => {
                 options.RefreshTokenInfoStore = _ => new RedisRefreshTokenInfoStore(rediConnStr, secretEncryptor: new X509SecretEncryptor(cert));
                 options.SecurityKeyProviderFactory = _ => new X509SecurityKeyProvider(cert);
                 options.StateStoreFactory = _ => new RedisStateStore(rediConnStr, prefix: "ecst:");
-                options.ClientStoreFactory = _ => new RedisClientStore(rediConnStr, "t:CLIENTS", secretEncryptor: new X509SecretEncryptor(cert));
+                options.ClientStoreFactory = _ => new RedisClientStore(rediConnStr, "ec:CLIENTS", secretEncryptor: new X509SecretEncryptor(cert));
                 options.TokenClaimBuilderFactory = _ => new MyTokenClaimBuilder();
-                options.ResourceOwnerValidatorFactory = sp =>
-                {
+                options.ResourceOwnerValidatorFactory = sp => {
                     var userService = sp.GetService<IUserService>();
                     return new MyResourceOwnerValidator(userService);
                 };
             });
 
-            services.AddSimpleInjector(_container, options =>
-            {
+            services.AddSimpleInjector(_container, options => {
                 options.AddAspNetCore()
                     .AddControllerActivation();
 
@@ -68,18 +65,14 @@ namespace auth {
         public void Configure(
               IApplicationBuilder app
             , IAuthServer auth2Server
-        )
-        {
+        ) {
             app.UseReverseProxy();
 
             app.UseSimpleInjector(_container);
 
-            if (HostEnvironment.IsDevelopment())
-            {
+            if (HostEnvironment.IsDevelopment()) {
                 app.UseDeveloperExceptionPage();
-            }
-            else
-            {
+            } else {
                 app.UseExceptionHandler("/Home/Error");
             }
             app.UseStaticFiles();
@@ -89,8 +82,7 @@ namespace auth {
             app.UseAuthentication();
             app.UseAuthorization();
 
-            app.UseEndpoints(endpoints =>
-            {
+            app.UseEndpoints(endpoints => {
                 endpoints.MapPost("/connect/token", auth2Server.TokenRequestHandler);
                 endpoints.MapGet("/connect/authorize", auth2Server.AuthorizeRequestHandler);
                 endpoints.MapGet("/connect/endsession", auth2Server.EndSessionRequestHandler);

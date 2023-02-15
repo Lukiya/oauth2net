@@ -53,6 +53,7 @@ namespace Microsoft.Extensions.DependencyInjection {
                     //    //var expStr = context.Properties.GetTokenValue(OAuth2Consts.Form_RefreshToken);
                     //    return Task.CompletedTask;
                     //};
+                    o.Cookie.SameSite = options.CookieSameSite; // RL {3A012FF7-DB5F-4688-8575-B499F51FF4A5}
                     if (options.AutoRefreshToken) {
                         // Validate principal, auto refresh token
                         o.Events.OnValidatePrincipal = x => ValidatePrincipal(x, httpClientFactory, tokenDTOStore, options);
@@ -126,6 +127,10 @@ namespace Microsoft.Extensions.DependencyInjection {
 
         private static async Task ValidatePrincipal(CookieValidatePrincipalContext context, IHttpClientFactory httpClientFactory, ITokenStore tokenDTOStore, ClientOptions options) {
             var tokenDTO = await tokenDTOStore.GetTokenDTOAsync();
+            if (tokenDTO == null) {
+                return;
+            }
+
             var jwt = tokenDTO.GetJwt();
 
             //if (!jwt.TryGetPayloadValue<long>(OAuth2Consts.Claim_AccessTokenExpire, out var exp))

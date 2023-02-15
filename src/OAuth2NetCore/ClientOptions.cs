@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.OAuth;
+using Microsoft.AspNetCore.Http;
 using Microsoft.IdentityModel.JsonWebTokens;
 using OAuth2NetCore.Security;
 using OAuth2NetCore.Store;
@@ -111,5 +112,9 @@ namespace OAuth2NetCore {
         /// Optional
         /// </summary>
         public Func<OAuthCreatingTicketContext, Model.Token, Task<bool>> PreCreatingTicket { get; set; }
+        /// <summary>
+        /// Cookie Same Site mode
+        /// </summary>
+        public SameSiteMode CookieSameSite { get; set; } = SameSiteMode.Lax;
     }
 }

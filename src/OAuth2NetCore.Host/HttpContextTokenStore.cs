@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authentication;
+﻿using IdentityModel.Client;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.JsonWebTokens;
@@ -12,11 +13,13 @@ namespace OAuth2NetCore.Host {
         private readonly ILogger<HttpContextTokenStore> _logger;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ISecureDataFormat<Model.Token> _tokenDTOProector;
+        private readonly ClientOptions _clientOptions;
 
-        public HttpContextTokenStore(IHttpContextAccessor httpContextAccessor, ISecureDataFormat<Model.Token> tokenDTOProector, ILogger<HttpContextTokenStore> logger) {
+        public HttpContextTokenStore(IHttpContextAccessor httpContextAccessor, ISecureDataFormat<Model.Token> tokenDTOProector, ClientOptions clientOptions, ILogger<HttpContextTokenStore> logger) {
             _logger = logger;
             _httpContextAccessor = httpContextAccessor;
             _tokenDTOProector = tokenDTOProector;
+            _clientOptions = clientOptions;
         }
 
         public Task<JsonWebToken> SaveTokenDTOAsync(string json) {
@@ -31,7 +34,11 @@ namespace OAuth2NetCore.Host {
 
         public Task<JsonWebToken> SaveTokenDTOAsync(Model.Token tokenDTO) {
             if (_httpContextAccessor.HttpContext != null) {
-                var cookieOptions = new CookieOptions();
+                var cookieOptions = new CookieOptions {
+                    SameSite = _clientOptions.CookieSameSite,    // RL {3A012FF7-DB5F-4688-8575-B499F51FF4A5}
+                    Secure = true,
+                    HttpOnly = true,
+                };
 
                 var jwt = tokenDTO.GetJwt();
                 if (jwt.TryGetPayloadValue<long>(OAuth2Consts.Claim_RefreshTokenExpire, out var rexp)) {

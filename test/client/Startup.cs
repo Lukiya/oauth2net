@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -27,6 +28,7 @@ namespace client {
             // 指定当前项目为支持OAuth2协议的客户端
             services.AddOAuth2Client(o => {
                 o.StateStoreFactory = _ => new RedisStateStore(rediConnStr);
+                o.CookieSameSite = SameSiteMode.None; // 解决iFrame无法设置Cookie问题, RL {3A012FF7-DB5F-4688-8575-B499F51FF4A5}
                 //o.IdentityClaimsBuilder = BuildIdentityClaims;  // 构造登录Cookie Claim，不指定则只有name和role
             }, clientOptions);
 
