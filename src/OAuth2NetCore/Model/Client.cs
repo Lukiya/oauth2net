@@ -8,6 +8,7 @@ namespace OAuth2NetCore.Model {
         public int AccessTokenExpireSeconds { get; set; } = 3600;
         public int RefreshTokenExpireSeconds { get; set; } = 3600 * 2;
         public int? Flags { get; set; }
+        public bool IsPublic { get; set; }
         public IList<string> Grants { get; set; }
         public IList<string> Audiences { get; set; }
         public IList<string> Scopes { get; set; }
