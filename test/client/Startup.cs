@@ -25,14 +25,14 @@ namespace client {
 
             services.AddControllersWithViews();
 
-            // 指定当前项目为支持OAuth2协议的客户端
+            // Specify the current project as an OAuth2 protocol-supported client
             services.AddOAuth2Client(o => {
                 o.StateStoreFactory = _ => new RedisStateStore(rediConnStr);
-                o.CookieSameSite = SameSiteMode.None; // 解决iFrame无法设置Cookie问题, RL {3A012FF7-DB5F-4688-8575-B499F51FF4A5}
-                //o.IdentityClaimsBuilder = BuildIdentityClaims;  // 构造登录Cookie Claim，不指定则只有name和role
+                o.CookieSameSite = SameSiteMode.None; // Fix the issue of setting Cookie in iFrame, RL {3A012FF7-DB5F-4688-8575-B499F51FF4A5}
+                //o.IdentityClaimsBuilder = BuildIdentityClaims;  // Build login Cookie Claims, if not specified, only name and role will be included
             }, clientOptions);
 
-            // 整合SimpleInjector
+            // Integrate SimpleInjector
             services.AddSimpleInjector(_container, options => {
                 options.AddAspNetCore()
                     .AddControllerActivation();
