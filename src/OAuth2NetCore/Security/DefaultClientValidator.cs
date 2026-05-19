@@ -1,11 +1,12 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using Microsoft.IdentityModel.Tokens;
 using OAuth2NetCore.Model;
 using OAuth2NetCore.Store;
 using System;
 using System.Linq;
 using System.Net;
+using System.Runtime.CompilerServices;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace OAuth2NetCore.Security {
@@ -45,25 +46,45 @@ namespace OAuth2NetCore.Security {
                 return mr;
             }
 
-            var authArray = authorzation.Split(OAuth2Consts.Seperator_Scope);
-            if (authArray.Length != 2 || string.IsNullOrWhiteSpace(authArray[1])) {
+            // RFC 7617: only "Basic <base64>" is supported here.
+            const string basicPrefix = "Basic ";
+            if (!authorzation.StartsWith(basicPrefix, StringComparison.OrdinalIgnoreCase)) {
+                mr.MsgCode = OAuth2Consts.Err_invalid_request;
+                mr.MsgCodeDescription = "authorization scheme must be 'Basic'";
+                _logger.LogWarning(mr.MsgCodeDescription);
+                return mr;
+            }
+            var encoded = authorzation.Substring(basicPrefix.Length).Trim();
+            if (string.IsNullOrEmpty(encoded)) {
                 mr.MsgCode = OAuth2Consts.Err_invalid_request;
                 mr.MsgCodeDescription = "invalid authorization header format";
                 _logger.LogWarning(mr.MsgCodeDescription);
                 return mr;
             }
 
-            var authStr = Base64UrlEncoder.Decode(authArray[1]);
-            authArray = authStr.Split(OAuth2Consts.Seperators_Auth, StringSplitOptions.RemoveEmptyEntries);
+            string authStr;
+            try {
+                // RFC 7617 mandates STANDARD base64, not base64url.
+                authStr = Encoding.UTF8.GetString(Convert.FromBase64String(encoded));
+            } catch (FormatException) {
+                mr.MsgCode = OAuth2Consts.Err_invalid_request;
+                mr.MsgCodeDescription = "authorization header base64 decode failed";
+                _logger.LogWarning(mr.MsgCodeDescription);
+                return mr;
+            }
 
-            if (authArray.Length != 2 || string.IsNullOrWhiteSpace(authArray[0]) || string.IsNullOrWhiteSpace(authArray[1])) {
+            // RFC 7617: split on the FIRST colon only — the password may legitimately contain ':'.
+            var colonIdx = authStr.IndexOf(':');
+            if (colonIdx <= 0 || colonIdx == authStr.Length - 1) {
                 mr.MsgCode = OAuth2Consts.Err_invalid_request;
                 mr.MsgCodeDescription = "invalid authorization header segments length";
                 _logger.LogWarning(mr.MsgCodeDescription);
                 return mr;
             }
 
-            mr.Result = new NetworkCredential(authArray[0], authArray[1]);
+            var user = authStr.Substring(0, colonIdx);
+            var pass = authStr.Substring(colonIdx + 1);
+            mr.Result = new NetworkCredential(user, pass);
             return mr;
         }
 
@@ -115,7 +136,7 @@ namespace OAuth2NetCore.Security {
                 return mr;
             }
 
-            if (credential.Password != client.Secret) {
+            if (!FixedTimeEquals(credential.Password, client.Secret)) {
                 mr.MsgCode = OAuth2Consts.Err_invalid_client;
                 mr.MsgCodeDescription = "invalid client";
                 _logger.LogWarning(mr.MsgCodeDescription);
@@ -124,6 +145,21 @@ namespace OAuth2NetCore.Security {
 
             mr.Result = client;
             return mr;
+        }
+
+        // Constant-time string comparison — protects client_secret check from timing attacks.
+        // netstandard2.0 lacks CryptographicOperations.FixedTimeEquals; implement equivalent here.
+        [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
+        private static bool FixedTimeEquals(string a, string b) {
+            if (a == null || b == null) return a == b;
+            var ab = Encoding.UTF8.GetBytes(a);
+            var bb = Encoding.UTF8.GetBytes(b);
+            var min = Math.Min(ab.Length, bb.Length);
+            int diff = ab.Length ^ bb.Length;
+            for (int i = 0; i < min; i++) {
+                diff |= ab[i] ^ bb[i];
+            }
+            return diff == 0;
         }
 
         /// <summary>

@@ -30,13 +30,13 @@ namespace auth {
             var rediConnStr = Configuration.GetConnectionString("Redis");
             var certPath = Configuration.GetValue<string>("CertPath");
             var certPass = Configuration.GetValue<string>("CertPass");
-            var cert = new X509Certificate2(certPath, certPass);
+            var cert = X509CertificateLoader.LoadPkcs12FromFile(certPath, certPass);
 
             services.AddControllersWithViews();
 
             services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
                 .AddCookie(o => {
-                    o.Cookie.SameSite = SameSiteMode.None;  // ½â¾öiFrameÎÞ·¨ÉèÖÃCookieÎÊÌâ, RL {3A012FF7-DB5F-4688-8575-B499F51FF4A5}
+                    o.Cookie.SameSite = SameSiteMode.None;  // ï¿½ï¿½ï¿½iFrameï¿½Þ·ï¿½ï¿½ï¿½ï¿½ï¿½Cookieï¿½ï¿½ï¿½ï¿½, RL {3A012FF7-DB5F-4688-8575-B499F51FF4A5}
                 });
 
             services.AddOAuth2AuthServer(options => {

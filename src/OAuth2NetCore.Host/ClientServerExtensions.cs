@@ -1,4 +1,4 @@
-﻿using IdentityModel.Client;
+﻿using Duende.IdentityModel.Client;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OAuth;
@@ -36,27 +36,21 @@ namespace Microsoft.Extensions.DependencyInjection {
             });
             services.AddTransient<ITokenStore, HttpContextTokenStore>();
 
-            var sp = services.BuildServiceProvider();
-            var httpClientFactory = sp.GetService<IHttpClientFactory>();
-            var tokenDTOStore = sp.GetService<ITokenStore>();
-
+            // Resolve services lazily from HttpContext.RequestServices at event time —
+            // calling services.BuildServiceProvider() here would prematurely create a second
+            // container and lock singleton handles out of the real DI container.
             services.AddAuthentication(authOptions => {
                 authOptions.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                 authOptions.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                 authOptions.DefaultChallengeScheme = OAuthDefaults.DisplayName;
             })
                 .AddCookie(o => {
-                    //o.Events.OnSigningIn = context =>
-                    //{
-                    //    //context.Properties.IsPersistent = true;
-                    //    context.Properties.ExpiresUtc = DateTimeOffset.UtcNow.AddDays(14);
-                    //    //var expStr = context.Properties.GetTokenValue(OAuth2Consts.Form_RefreshToken);
-                    //    return Task.CompletedTask;
-                    //};
                     o.Cookie.SameSite = options.CookieSameSite; // RL {3A012FF7-DB5F-4688-8575-B499F51FF4A5}
                     if (options.AutoRefreshToken) {
-                        // Validate principal, auto refresh token
-                        o.Events.OnValidatePrincipal = x => ValidatePrincipal(x, httpClientFactory, tokenDTOStore, options);
+                        o.Events.OnValidatePrincipal = ctx => {
+                            var sp = ctx.HttpContext.RequestServices;
+                            return ValidatePrincipal(ctx, sp.GetRequiredService<IHttpClientFactory>(), sp.GetRequiredService<ITokenStore>(), options);
+                        };
                     }
                 })
                 .AddOAuth<OAuthOptions, OAuth2Handler>(OAuthDefaults.DisplayName, o => {
@@ -93,8 +87,9 @@ namespace Microsoft.Extensions.DependencyInjection {
 
                             context.Principal = new ClaimsPrincipal(new ClaimsIdentity(OAuthDefaults.DisplayName, OAuth2Consts.Claim_Name, OAuth2Consts.Claim_Role));
 
-                            // Save token to cookie, and return a json web token
-                            var jwt = await tokenDTOStore.SaveTokenDTOAsync(tokenDTO);
+                            // Resolve the token store from the live DI container, not a captured singleton.
+                            var tokenStore = context.HttpContext.RequestServices.GetRequiredService<ITokenStore>();
+                            var jwt = await tokenStore.SaveTokenDTOAsync(tokenDTO);
                             if (jwt != null) {
                                 var claims = await options.IdentityClaimsBuilder(jwt);
                                 foreach (var claim in claims) {

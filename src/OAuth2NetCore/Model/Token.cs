@@ -1,10 +1,14 @@
 ﻿using Microsoft.IdentityModel.JsonWebTokens;
-using System.Text;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace OAuth2NetCore.Model {
     public class Token
     {
+        private static readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions {
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+        };
+
         private readonly object _locker = new object();
         private volatile JsonWebToken _jwt;
 
@@ -40,34 +44,6 @@ namespace OAuth2NetCore.Model {
             return _jwt;
         }
 
-        public string ToJsonString()
-        {
-            var sb = new StringBuilder("{");
-
-            sb.AppendFormat("\"{0}\":\"{1}\"", OAuth2Consts.Form_AccessToken, AccessToken);
-
-            if (!string.IsNullOrWhiteSpace(RefreshToken))
-            {
-                sb.AppendFormat(",\"{0}\":\"{1}\"", OAuth2Consts.Form_RefreshToken, RefreshToken);
-            }
-
-            sb.AppendFormat(",\"{0}\":{1}", OAuth2Consts.Form_ExpiresIn, AccessTokenExpiresIn);
-
-            sb.AppendFormat(",\"{0}\":\"{1}\"", OAuth2Consts.Form_TokenType, TokenType);
-
-            if (!string.IsNullOrWhiteSpace(Scopes))
-            {
-                sb.AppendFormat(",\"{0}\":\"{1}\"", OAuth2Consts.Form_Scope, Scopes);
-            }
-
-            if (!string.IsNullOrWhiteSpace(State))
-            {
-                sb.AppendFormat(",\"{0}\":\"{1}\"", OAuth2Consts.Form_State, State);
-            }
-
-            sb.Append("}");
-
-            return sb.ToString();
-        }
+        public string ToJsonString() => JsonSerializer.Serialize(this, _jsonOptions);
     }
 }

@@ -30,6 +30,13 @@ namespace Microsoft.Extensions.DependencyInjection {
                         IssuerSigningKey = options.IssuerSigningKey,
                         ValidIssuer = options.ValidIssuer,
                         ValidAudience = options.ValidAudience,
+                        // Explicit defense against alg=none / HS-with-RSA-public-key confusion.
+                        ValidAlgorithms = options.ValidAlgorithms,
+                        RequireSignedTokens = true,
+                        ValidateIssuer = true,
+                        ValidateAudience = true,
+                        ValidateLifetime = true,
+                        ValidateIssuerSigningKey = true,
                     };
                 }
             );

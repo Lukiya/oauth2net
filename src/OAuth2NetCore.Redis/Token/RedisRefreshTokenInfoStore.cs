@@ -28,15 +28,14 @@ namespace OAuth2NetCore.Redis.Token {
 
         public async Task<RefreshTokenInfo> GetThenRemoveTokenInfoAsync(string refreshToken)
         {
-            var json = await Database.StringGetAsync(_prefix + refreshToken);
+            // Atomic GETDEL (Redis 6.2+) — eliminates the race that would otherwise let two
+            // concurrent requests both consume the same refresh token.
+            var json = await Database.StringGetDeleteAsync(_prefix + refreshToken);
             if (!string.IsNullOrWhiteSpace(json))
             {
                 if (_secertEncryptor.TryDecrypt(json, out var decryptedJson))
                 {
-                    json = decryptedJson;
-                    var r = JsonSerializer.Deserialize<RefreshTokenInfo>(json);
-                    await RemoveRefreshTokenAsync(refreshToken);    // remove refresh token after using
-                    return r;
+                    return JsonSerializer.Deserialize<RefreshTokenInfo>(decryptedJson);
                 }
             }
 

@@ -20,10 +20,8 @@ namespace OAuth2NetCore.Redis.State {
         }
 
         public async Task<string> GetThenRemoveAsync(string key) {
-            key = _prefix + key;
-            var value = await Database.StringGetAsync(key);
-            await Database.KeyDeleteAsync(key);    // remove refresh token after using
-
+            // Atomic GETDEL (Redis 6.2+) — prevents concurrent reuse of the same state value.
+            var value = await Database.StringGetDeleteAsync(_prefix + key);
             return value;
         }
     }

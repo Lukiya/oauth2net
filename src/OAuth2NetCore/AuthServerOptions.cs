@@ -15,6 +15,10 @@ namespace OAuth2NetCore {
         /// </summary>
         public bool PKCERequired { get; set; } = true;
         /// <summary>
+        /// If true, accept "plain" code_challenge_method. Default false — only S256 is accepted.
+        /// </summary>
+        public bool AllowPlainPkce { get; set; } = false;
+        /// <summary>
         /// Required
         /// </summary>
         public Func<IServiceProvider, ITokenClaimBuilder> TokenClaimBuilderFactory { get; set; }

@@ -12,6 +12,18 @@ using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace OAuth2NetCore.Host {
+    internal static class LocalRedirectGuard {
+        // Returns input only when it is a local (same-origin) relative URL. Falls back to "/" to
+        // prevent an attacker from supplying ?returnUrl=https://evil.com on signin/signout.
+        public static string SafeLocal(string returnUrl) {
+            if (string.IsNullOrEmpty(returnUrl)) return "/";
+            // Must start with a single '/', and not '//' or '/\' (protocol-relative).
+            if (returnUrl[0] != '/') return "/";
+            if (returnUrl.Length > 1 && (returnUrl[1] == '/' || returnUrl[1] == '\\')) return "/";
+            return returnUrl;
+        }
+    }
+
     public class DefaultClientServer : IClientServer {
         private readonly IStateStore _stateStore;
         private readonly IStateGenerator _stateGenerator;
@@ -47,17 +59,10 @@ namespace OAuth2NetCore.Host {
         /// handle sign out request
         /// </summary>
         protected virtual async Task HandleSignOutRequestAsync(HttpContext context) {
-            // save return url to state store
-            var returnUrl = context.Request.Query[OAuth2Consts.Form_ReturnUrl].FirstOrDefault() ?? Uri.EscapeDataString("/");
+            // Save return url to state store — guard against open redirect when it gets used.
+            var returnUrl = LocalRedirectGuard.SafeLocal(context.Request.Query[OAuth2Consts.Form_ReturnUrl].FirstOrDefault());
             var state = await _stateGenerator.GenerateAsync();
             await _stateStore.SaveAsync(state, returnUrl);
-
-            // redirect to auth server
-            var clientID = _options.ClientID;
-            //var callbackUri = new UriBuilder();
-            //callbackUri.Scheme = context.Request.Scheme;
-            //callbackUri.Host = context.Request.Host.Value;
-            //callbackUri.Path = _options.SignOutCallbackPath;
 
             // This change is to fix https://dw.xxx.com:10032/signout -> https://[dw.xxx.com:10032]/signout
             var callbackUri = new UriBuilder {
@@ -67,7 +72,11 @@ namespace OAuth2NetCore.Host {
                 Path = _options.SignOutCallbackPath
             };
 
-            var targetUri = $"{_options.EndSessionEndpoint}?client_id={clientID}&redirect_uri={Uri.EscapeDataString(callbackUri.ToString())}&state={state}";
+            var targetUri = OAuth2Utils.AppendQuery(_options.EndSessionEndpoint, new[] {
+                new KeyValuePair<string, string>(OAuth2Consts.Form_ClientID, _options.ClientID),
+                new KeyValuePair<string, string>(OAuth2Consts.Form_RedirectUri, callbackUri.ToString()),
+                new KeyValuePair<string, string>(OAuth2Consts.Form_State, state),
+            });
             context.Response.Redirect(targetUri);
         }
 
@@ -105,7 +114,8 @@ namespace OAuth2NetCore.Host {
 
                 // sign out & redirect to return url
                 await context.OAuth2SignOutAsync();
-                context.Response.Redirect(returnUrl);
+                // Guard against open redirect — returnUrl is user-supplied at /signout entry.
+                context.Response.Redirect(LocalRedirectGuard.SafeLocal(returnUrl));
                 return;
             }
 
@@ -113,7 +123,8 @@ namespace OAuth2NetCore.Host {
         }
 
         protected virtual async Task HandleSignInRequestAsync(HttpContext context) {
-            var returnUrl = context.Request.Query["returnUrl"];
+            // Guard against open redirect — returnUrl is user-supplied; only allow local paths.
+            var returnUrl = LocalRedirectGuard.SafeLocal(context.Request.Query["returnUrl"]);
             var t = context.Request.Query["t"];
             var authProps = new AuthenticationProperties();
             if (!string.IsNullOrWhiteSpace(t)) {

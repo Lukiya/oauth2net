@@ -1,15 +1,15 @@
 ﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using OAuth2NetCore.Model;
 using OAuth2NetCore.Security;
 using OAuth2NetCore.Store;
 using OAuth2NetCore.Token;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-//using System.Text.Json;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace OAuth2NetCore {
@@ -80,7 +80,10 @@ namespace OAuth2NetCore {
             var scopesStr = context.Request.Query[OAuth2Consts.Form_Scope].FirstOrDefault();
             var state = context.Request.Query[OAuth2Consts.Form_State].FirstOrDefault();
 
-            //GetSurferID(context);
+            // RFC 6749 §10.12: state is the client-side CSRF defense. Warn if missing.
+            if (string.IsNullOrWhiteSpace(state)) {
+                _logger.LogWarning("/authorize request missing 'state' parameter (client_id={ClientID})", clientID);
+            }
 
             // verify client
             var clientVerifyResult = await _clientValidator.VerifyClientAsync(
@@ -136,39 +139,31 @@ namespace OAuth2NetCore {
         /// </summary>
         protected virtual async Task AuthorizationCodeRequestHandler(HttpContext context, IClient client, string scopesStr, string redirectURI, string state) {
             string code;
-            // pkce check
-            if (!AuthServerOptions.PKCERequired) {
-                // pkce not required, just issue code
-                code = await _authCodeGenerator.GenerateAsync();
-                await _authCodeStore.SaveAsync(code,
-                    new RefreshTokenInfo {
-                        ClientID = client.ID,
-                        Scopes = scopesStr,
-                        RedirectUri = redirectURI,
-                        UN = context.User.Identity.Name,
+            string codeChanllenge = null;
+            string codeChanllengeMethod = null;
+
+            if (AuthServerOptions.PKCERequired) {
+                codeChanllenge = context.Request.Query[OAuth2Consts.Form_CodeChallenge].FirstOrDefault();
+                if (string.IsNullOrWhiteSpace(codeChanllenge)) {
+                    await ErrorHandler(context.Response, HttpStatusCode.BadRequest, OAuth2Consts.Err_invalid_request, "code_challenge is required.");
+                    return;
+                }
+
+                codeChanllengeMethod = context.Request.Query[OAuth2Consts.Form_CodeChallengeMethod].FirstOrDefault();
+                if (string.IsNullOrWhiteSpace(codeChanllengeMethod)) {
+                    // Secure default: require S256 when method is omitted (OAuth 2.1 / BCP).
+                    codeChanllengeMethod = OAuth2Consts.Pkce_S256;
+                } else if (codeChanllengeMethod == OAuth2Consts.Pkce_Plain) {
+                    if (!AuthServerOptions.AllowPlainPkce) {
+                        await ErrorHandler(context.Response, HttpStatusCode.BadRequest, OAuth2Consts.Err_invalid_request, "code_challenge_method 'plain' is not allowed, use 'S256'.");
+                        return;
                     }
-                );
-
-                context.Response.Redirect($"{redirectURI}?{OAuth2Consts.Form_Code}={code}&{OAuth2Consts.Form_State}={Uri.EscapeDataString(state)}");
-                return;
+                } else if (codeChanllengeMethod != OAuth2Consts.Pkce_S256) {
+                    await ErrorHandler(context.Response, HttpStatusCode.BadRequest, OAuth2Consts.Err_invalid_request, "transform algorithm not supported");
+                    return;
+                }
             }
 
-            // pkce required
-            var codeChanllenge = context.Request.Query[OAuth2Consts.Form_CodeChallenge].FirstOrDefault();
-            if (string.IsNullOrWhiteSpace(codeChanllenge)) {// client didn't provide pkce chanllenge, write error
-                await ErrorHandler(context.Response, HttpStatusCode.BadRequest, OAuth2Consts.Err_invalid_request, "code chanllenge is required.");
-                return;
-            }
-            // client provided pkce chanllenge
-            var codeChanllengeMethod = context.Request.Query[OAuth2Consts.Form_CodeChallengeMethod].FirstOrDefault();
-            if (string.IsNullOrWhiteSpace(codeChanllengeMethod)) {
-                codeChanllengeMethod = OAuth2Consts.Pkce_Plain;
-            } else if (codeChanllengeMethod != OAuth2Consts.Pkce_Plain && codeChanllengeMethod != OAuth2Consts.Pkce_S256) {
-                await ErrorHandler(context.Response, HttpStatusCode.BadRequest, OAuth2Consts.Err_invalid_request, "transform algorithm not supported");
-                return;
-            }
-
-            // issue code with chanllenge
             code = await _authCodeGenerator.GenerateAsync();
             await _authCodeStore.SaveAsync(code,
                 new RefreshTokenInfo {
@@ -181,7 +176,13 @@ namespace OAuth2NetCore {
                 }
             );
 
-            context.Response.Redirect($"{redirectURI}?{OAuth2Consts.Form_Code}={code}&{OAuth2Consts.Form_State}={Uri.EscapeDataString(state)}&{OAuth2Consts.Form_CodeChallenge}={Uri.EscapeDataString(codeChanllenge)}&{OAuth2Consts.Form_CodeChallengeMethod}={codeChanllengeMethod}");
+            // Per RFC 6749 §4.1.2 the authorization response carries only `code` and `state`.
+            // (The code_challenge stays server-side; echoing it serves no purpose and leaks via logs/Referer.)
+            var redirect = OAuth2Utils.AppendQuery(redirectURI, new[] {
+                new KeyValuePair<string, string>(OAuth2Consts.Form_Code, code),
+                new KeyValuePair<string, string>(OAuth2Consts.Form_State, state),
+            });
+            context.Response.Redirect(redirect);
         }
 
         /// <summary>
@@ -196,7 +197,16 @@ namespace OAuth2NetCore {
                 , username: context.User.Identity.Name
             );
 
-            context.Response.Redirect($"{redirectURI}?{OAuth2Consts.Form_AccessToken}={Uri.EscapeDataString(token)}&{OAuth2Consts.Form_TokenType}=Bearer&{OAuth2Consts.Form_ExpiresIn}={client.AccessTokenExpireSeconds}&{OAuth2Consts.Form_Scope}={Uri.EscapeDataString(scopesStr)}&{OAuth2Consts.Form_State}={Uri.EscapeDataString(state)}");
+            // RFC 6749 §4.2.2: implicit grant MUST return tokens in the URL fragment so they
+            // never reach server access logs or the Referer header.
+            var redirect = OAuth2Utils.AppendFragment(redirectURI, new[] {
+                new KeyValuePair<string, string>(OAuth2Consts.Form_AccessToken, token),
+                new KeyValuePair<string, string>(OAuth2Consts.Form_TokenType, OAuth2Consts.Token_Type_Bearer),
+                new KeyValuePair<string, string>(OAuth2Consts.Form_ExpiresIn, client.AccessTokenExpireSeconds.ToString()),
+                new KeyValuePair<string, string>(OAuth2Consts.Form_Scope, scopesStr),
+                new KeyValuePair<string, string>(OAuth2Consts.Form_State, state),
+            });
+            context.Response.Redirect(redirect);
         }
 
         /// <summary>
@@ -269,14 +279,16 @@ namespace OAuth2NetCore {
             }
 
             var endSessionID = Guid.NewGuid().ToString("n");
-            if (!string.IsNullOrWhiteSpace(state)) {
-                await _stateStore.SaveAsync(clientID + ":" + endSessionID, state);
-            }
+            await _stateStore.SaveAsync(clientID + ":" + endSessionID, state);
 
             // sign out
             await context.OAuth2SignOutAsync();
 
-            context.Response.Redirect($"{redirectURI}?{OAuth2Consts.Form_State}={Uri.EscapeDataString(state)}&{OAuth2Consts.Form_EndSessionID}={Uri.EscapeDataString(endSessionID)}");
+            var redirect = OAuth2Utils.AppendQuery(redirectURI, new[] {
+                new KeyValuePair<string, string>(OAuth2Consts.Form_State, state),
+                new KeyValuePair<string, string>(OAuth2Consts.Form_EndSessionID, endSessionID),
+            });
+            context.Response.Redirect(redirect);
         }
 
         /// <summary>
@@ -321,6 +333,7 @@ namespace OAuth2NetCore {
             }
 
             await _tokenStore.RemoveRefreshTokenAsync(oldRefreshToken);
+            context.Response.StatusCode = (int)HttpStatusCode.OK;
         }
 
         /// <summary>
@@ -476,8 +489,8 @@ namespace OAuth2NetCore {
         /// </summary>
         protected virtual async Task WriteTokenAsync(HttpResponse response, string token, string scopes, IClient client, string refreshToken = null) {
             response.ContentType = OAuth2Consts.ContentType_Json;
-            response.Headers.Add(OAuth2Consts.Header_CacheControl, OAuth2Consts.Header_CacheControl_Value);
-            response.Headers.Add(OAuth2Consts.Header_Pragma, OAuth2Consts.Header_Pragma_Value);
+            response.Headers.Append(OAuth2Consts.Header_CacheControl, OAuth2Consts.Header_CacheControl_Value);
+            response.Headers.Append(OAuth2Consts.Header_Pragma, OAuth2Consts.Header_Pragma_Value);
 
             if (string.IsNullOrWhiteSpace(refreshToken)) {
                 await response.WriteAsync(GenereateTokenJson(token, scopes, client));
@@ -496,9 +509,11 @@ namespace OAuth2NetCore {
 
             response.StatusCode = (int)statusCode;
             response.ContentType = OAuth2Consts.ContentType_Json;
-            response.Headers.Add(OAuth2Consts.Header_CacheControl, OAuth2Consts.Header_CacheControl_Value);
-            response.Headers.Add(OAuth2Consts.Header_Pragma, OAuth2Consts.Header_Pragma_Value);
-            await response.WriteAsync(string.Format(OAuth2Consts.Format_Error, error, errorDescription));
+            response.Headers.Append(OAuth2Consts.Header_CacheControl, OAuth2Consts.Header_CacheControl_Value);
+            response.Headers.Append(OAuth2Consts.Header_Pragma, OAuth2Consts.Header_Pragma_Value);
+            // Use STJ to ensure quotes / control chars in errorDescription cannot break the JSON.
+            var json = JsonSerializer.Serialize(new { error, error_description = errorDescription });
+            await response.WriteAsync(json);
         }
 
         /// <summary>
@@ -540,7 +555,8 @@ namespace OAuth2NetCore {
                 return;
             }
 
-            var json = JsonConvert.SerializeObject(openIDConfig, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
+            context.Response.ContentType = OAuth2Consts.ContentType_Json;
+            var json = JsonSerializer.Serialize(openIDConfig, _wellknownJsonOptions);
             await context.Response.WriteAsync(json);
         }
 
@@ -556,10 +572,13 @@ namespace OAuth2NetCore {
                 return;
             }
 
-            var json = JsonConvert.SerializeObject(jwk, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
-            json = $"{{\"keys\":[{json}]}}";
-
+            context.Response.ContentType = OAuth2Consts.ContentType_Json;
+            var json = JsonSerializer.Serialize(new { keys = new[] { jwk } }, _wellknownJsonOptions);
             await context.Response.WriteAsync(json);
         }
+
+        private static readonly JsonSerializerOptions _wellknownJsonOptions = new JsonSerializerOptions {
+            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
+        };
     }
 }

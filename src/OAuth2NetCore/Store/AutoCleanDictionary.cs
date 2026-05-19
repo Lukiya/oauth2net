@@ -28,6 +28,13 @@ namespace OAuth2NetCore.Store {
         {
             if (_dic.TryRemove(key, out var paylaod))
             {
+                // Honor the payload's TTL even if the periodic sweep hasn't fired yet — otherwise
+                // an authorization code could still be redeemed past its expiration window.
+                if (DateTimeOffset.UtcNow >= paylaod.Expire)
+                {
+                    value = default;
+                    return false;
+                }
                 value = paylaod.Payload;
                 return true;
             }
